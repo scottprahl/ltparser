@@ -1,0 +1,23 @@
+[build-system]
+requires = [
+    "setuptools >= 44",
+    "setuptools_scm >= 2.0.0, <3"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.tox]
+legacy_tox_ini = """
+
+[tox]
+envlist = py39
+
+[testenv]
+deps = pytest
+       matplotlib
+       numpy
+       lcapy
+       pyparsing
+
+commands =
+    python3 -m pytest tests/tests.py
+"""
