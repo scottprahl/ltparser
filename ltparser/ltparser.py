@@ -58,6 +58,18 @@ def the_direction(line):
     return 'right'
 
 
+def ltspice_sine_parser(s):
+    number = pp.Combine(pp.Optional('.') + pp.Word(pp.nums) +
+                        pp.Optional('.' + pp.Optional(pp.Word(pp.nums))))
+    sine = pp.Literal('SINE(') + number * 3 + pp.Literal(')')
+    
+    parsed = sine.parseString(s)
+    dc = float(parsed[1])
+    amp = float(parsed[2])
+    omega0 = float(parsed[3])
+    
+    return dc, amp, omega0
+    
 def ltspice_value_to_number(s):
     """Convert LTspice value 4.7k to 4700."""
 #    print("converting ", s)
@@ -126,16 +138,21 @@ class LTspice():
         self.parsed = None
         self.nodes = None
         self.netlist = None
+        self.single_ground = True
 
     def read(self, filename):
         """Read a file as contents."""
-        try:
-            with open(filename, 'r', encoding='utf-16-le') as f:
-                self.contents = f.read()
-        except UnicodeError:
-            with open(filename, 'r', encoding='mac-roman') as f:
-                self.contents = f.read()
-
+        encodings = ['utf-8', 'utf-16-le', 'mac-roman', 'windows-1250'] 
+        for e in encodings:
+            try:
+                with open(filename, 'r', encoding=e) as f:
+                    self.contents = f.read()
+            except UnicodeError:
+                print('got unicode error with %s , trying different encoding' % e)
+            else:
+                print('opening the file with encoding:  %s ' % e)
+                break
+        
     def parse(self):
         """Parse LTspice .asc file contents."""
         heading = pp.Group(pp.Keyword("Version") + pp.Literal("4"))
@@ -160,7 +177,8 @@ class LTspice():
         linetypes = wire | flag | iopin | component | line | text | rect
 
         grammar = heading + sheet + pp.Dict(pp.ZeroOrMore(linetypes))
-        self.parsed = grammar.parseString(self.contents)
+        if self.contents is not None:
+            self.parsed = grammar.parseString(self.contents)
 
 
     def print_parsed(self):
@@ -204,7 +222,7 @@ class LTspice():
         maxy = -1e6
         for key in self.nodes:
             x, y = key.split('_')
-            node = self.nodes(key)
+            node = self.nodes[key]
             xx = int(x)
             yy = int(y)
 
@@ -212,9 +230,10 @@ class LTspice():
             maxy = max(yy, maxy)
             if node == 0:
                 plt.plot([xx], [yy], 'ok', markersize=3)
+                plt.text(xx, yy, 'gnd', ha='center', va='top')
             else:
                 plt.plot([xx], [yy], 'ob', markersize=3)
-                plt.text(xx, yy, self.nodes[key], ha='center', va='bottom')
+                plt.text(xx, yy, self.nodes[key], color='blue', ha='right', va='bottom')
 
         plt.ylim(maxy+0.1*(maxy-miny), miny-0.1*(maxy-miny))
         plt.show()
@@ -229,6 +248,8 @@ class LTspice():
         not, then it is added to the dictionary of nodes.
         """
         self.nodes = {}
+        if self.parsed is None:
+            return
 
         # create all the ground nodes
         for line in self.parsed:
@@ -236,6 +257,9 @@ class LTspice():
                 n1 = node_key(line[1], line[2])
                 if n1 not in self.nodes:
                     self.nodes[n1] = 0
+
+        if len(self.nodes) > 1:
+            self.single_ground = False
 
         # now wire nodes
         for line in self.parsed:
@@ -309,6 +333,14 @@ class LTspice():
         if kind == 'current':
             direction += ', invert'
 
+        if kind == 'current' or kind == 'voltage':
+            if not isinstance(value, float):
+                try:
+                    dc, amp, omega0 = ltspice_sine_parser(value)
+                    return '%s %d %d ac %f; %s\n' % (name, node1, node2, amp, direction)
+                except pp.ParseException:
+                    pass
+
         if kind == 'polcap':
             direction += ', kind=polar, invert'
 
@@ -319,6 +351,8 @@ class LTspice():
         self.netlist = ''
         if self.parsed is None:
             self.parse()
+            if self.parsed is None:
+                return
 
         if self.nodes is None:
             self.make_nodes_from_wires()
@@ -379,4 +413,7 @@ class LTspice():
         cct = lcapy.Circuit()
         for line in self.netlist.splitlines():
             cct.add(line)
+        
+        if not self.single_ground:
+            cct.add(';autoground=True')
         return cct
