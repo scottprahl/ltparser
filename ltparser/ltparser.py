@@ -59,17 +59,18 @@ def the_direction(line):
 
 
 def ltspice_sine_parser(s):
+    """Try and figure out offset, amplitude, and frequency."""
     number = pp.Combine(pp.Optional('.') + pp.Word(pp.nums) +
                         pp.Optional('.' + pp.Optional(pp.Word(pp.nums))))
     sine = pp.Literal('SINE(') + number * 3 + pp.Literal(')')
-    
+
     parsed = sine.parseString(s)
     dc = float(parsed[1])
     amp = float(parsed[2])
     omega0 = float(parsed[3])
-    
+
     return dc, amp, omega0
-    
+
 def ltspice_value_to_number(s):
     """Convert LTspice value 4.7k to 4700."""
 #    print("converting ", s)
@@ -142,7 +143,21 @@ class LTspice():
 
     def read(self, filename):
         """Read a file as contents."""
-        encodings = ['utf-8', 'utf-16-le', 'mac-roman', 'windows-1250'] 
+        encodings = []
+        with open(filename, 'rb') as f:
+            byte1 = f.read(1)
+            byte2 = f.read(1)
+
+        if byte1 != b'V':
+            raise Exception('This is not an LTspice file.')
+
+        if byte2 == b'e':
+            encodings = ['utf-8', 'mac-roman', 'windows-1250']
+        elif byte2 == b'\x00':
+            encodings = ['utf-16']
+        else:
+            raise Exception('This is not an LTspice file.')
+
         for e in encodings:
             try:
                 with open(filename, 'r', encoding=e) as f:
@@ -152,7 +167,7 @@ class LTspice():
             else:
                 print('opening the file with encoding:  %s ' % e)
                 break
-        
+
     def parse(self):
         """Parse LTspice .asc file contents."""
         heading = pp.Group(pp.Keyword("Version") + pp.Literal("4"))
@@ -418,7 +433,7 @@ class LTspice():
         cct = lcapy.Circuit()
         for line in self.netlist.splitlines():
             cct.add(line)
-        
+
         if not self.single_ground:
             cct.add(';autoground=True')
         return cct
