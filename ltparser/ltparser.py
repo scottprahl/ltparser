@@ -311,6 +311,7 @@ class LTspice():
 
         name = ''
         value = ''
+        value2 = None
         for sub_line in line:
             row = list(sub_line)
 
@@ -323,6 +324,10 @@ class LTspice():
 
             if row[1] == 'Value':
                 value = row[3]
+                continue
+
+            if row[1] == 'Value2':
+                value2 = row[3]
                 continue
 
         node1, node2 = self.match_node(x, y, kind, direction)
