@@ -1,5 +1,5 @@
 ltparser
-======
+========
 
 by Scott Prahl
 
@@ -20,42 +20,26 @@ by Scott Prahl
 
 __________
 
-A basic collection of routines to ray trace through graded
-index (GRIN) lenses with a parabolic radial profile.
+Simple parser for converting LTspice `.asc` files to simple netlists.  Only a
+few LTspice elements are currently supported.
 
 Usage
 -----
 
-Example Light paths in a 0.25 pitch GRIN lens from an ancient Melles Griot Catalog::
+    Example::
 
-    import ltparser
-    n = 1.608 
-    gradient = 0.339 
-    length = 5.37
-    diameter = 1.8
-    
-    pitch = ltparser.period(gradient, length)
-    ffl = ltparser.FFL(n,pitch,length)
-    efl = ltparser.EFL(n,pitch,length)
-    na = ltparser.NA(n,pitch,length,diameter)
+        import lcapy
+        import ltparser
 
-    angle = ltparser.max_angle(n,pitch,length,diameter)
-    print('expected pitch = 0.29,            calculated %.2f' % pitch)
-    print('expected FFL = 0.46 mm,           calculated %.2f' % ffl)
-    print('expected NA = 0.46,               calculated %.2f' % na)
-    print('expected full accept angle = 55°, calculated %.0f°' % (2*angle*180/np.pi))
-    print('working distance = %.2f mm'%(efl-ffl))
+        lt = ltparser.LTspice()
+        lt.read('../tests/ltspice/twin-t.asc')
+        lt.make_netlist()
+        cct=lt.circuit()
+        cct.draw(scale=0.5)
 
 Produces::
 
-    expected pitch = 0.29,            calculated 0.29
-    expected FFL = 0.46,              calculated 0.47
-    expected NA = 0.46,               calculated 0.46
-    expected full accept angle = 55°, calculated 55°
-    working distance = 1.43 mm
-
-But the real utility of this module is creating plots that show the path of rays through
-a GRIN lens.   For examples, see <https://ltparser.readthedocs.io>
+.. image:: https://github.com/scottprahl/ltparser/blob/23501f052f2adf01253482f978035e28b69d0aa3/twin-t.png
 
 Installation
 ------------
@@ -63,7 +47,7 @@ Installation
 Source code is available at <https://github.com/scottprahl/ltparser> or the module
 can be installed using `pip`::
 
-    pip install --user ltparser
+    pip install ltparser
 
 License
 -------
