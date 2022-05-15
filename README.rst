@@ -26,16 +26,18 @@ few LTspice elements are currently supported.
 Usage
 -----
 
-    import lcapy
-    import ltparser
+    Example::
 
-    lt = ltparser.LTspice()
-    lt.read('../tests/ltspice/twin-t.asc')
-    lt.make_netlist()
-    cct=lt.circuit()
-    cct.draw(scale=0.5)
+        import lcapy
+        import ltparser
 
-Produces::
+        lt = ltparser.LTspice()
+        lt.read('../tests/ltspice/twin-t.asc')
+        lt.make_netlist()
+        cct=lt.circuit()
+        cct.draw(scale=0.5)
+
+produces
 
 .. image:: twin-t.png
 
