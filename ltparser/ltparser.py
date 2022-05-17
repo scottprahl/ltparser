@@ -231,18 +231,18 @@ class LTspice():
     def sort_nodes(self):
         """Sorts the notes a dict with nodes sorted."""
         return
-        sorted_keys = sorted(self.nodes)
-
-        grounds = 0
-        for key in sorted_keys:
-            if self.nodes[key] == 0:
-                grounds += 1
-
-        count = 1
-        for key in sorted_keys:
-            if self.nodes[key] != 0:
-                self.nodes[key] = count
-                count += 1
+#         sorted_keys = sorted(self.nodes)
+#
+#         grounds = 0
+#         for key in sorted_keys:
+#             if self.nodes[key] == 0:
+#                 grounds += 1
+#
+#         count = 1
+#         for key in sorted_keys:
+#             if self.nodes[key] != 0:
+#                 self.nodes[key] = count
+#                 count += 1
 
     def print_nodes(self):
         """Print the notes a dict with nodes sorted."""
@@ -278,16 +278,16 @@ class LTspice():
         n = node_key(x,y)
         if n in self.nodes:
             return
-        
+
         if name:
             name = name.replace('_','•',1)
             name = name.replace('_','')
             name = name.replace('•', '_')
             self.nodes[n] = name
             return
-        
+
         self.nodes[n] = len(self.nodes)+1
-    
+
     def make_nodes_from_wires(self):
         """
         Produce the dictionary of nodes for all wires and grounds.
@@ -310,7 +310,7 @@ class LTspice():
                     ground_count += 1
 
         self.single_ground = ground_count <= 1
-        
+
         # now wire nodes
         for line in self.parsed:
             if line[0] == 'WIRE':
@@ -320,13 +320,13 @@ class LTspice():
     def wire_to_netlist(self, line):
         """Return netlist string for one wire in parsed data."""
         if line[0] != 'WIRE':
-            return ''
+            return
 
         n1 = self.nodes[node_key(line[1], line[2])]
         n2 = self.nodes[node_key(line[3], line[4])]
 
         direction = the_direction(line)
-        
+
         # make the wires all go right or down
         if direction == 'up':
             n1, n2 = n2, n1
@@ -342,7 +342,7 @@ class LTspice():
         """Return netlist string for symbol in parsed data."""
         first = list(line[0])
         if first[0] != 'SYMBOL':
-            return ''
+            return
 
         kind = first[1]
 #        print("\nKind==", kind)
@@ -392,7 +392,7 @@ class LTspice():
         if kind == 'current':
             direction += ', invert'
 
-        if kind == 'current' or kind == 'voltage':
+        if kind in ('current', 'voltage'):
             if not isinstance(value, float):
                 try:
                     dc, amp, omega0 = ltspice_sine_parser(value)
