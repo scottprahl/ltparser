@@ -7,3 +7,7 @@ exclude requirements.txt
 exclude Makefile
 exclude docs/*
 exclude docs/*
+exclude tests/*
+exclude tests/ltspice/*
+exclude twin-t.png
+exclude todo
