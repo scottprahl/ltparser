@@ -15,7 +15,6 @@ Example::
     >>>> cct = lt.circuit()
     >>>> cct.draw()
 """
-
 import matplotlib.pyplot as plt
 import pyparsing as pp
 import lcapy
@@ -190,7 +189,7 @@ class LTspice():
         """Parse LTspice .asc file contents."""
         heading = pp.Group(pp.Keyword("Version") + pp.Literal("4"))
         integer = pp.Combine(pp.Optional(pp.Char('-')) + pp.Word(pp.nums))
-        label = pp.Word(pp.alphanums + '_' + 'µ')
+        label = pp.Word(pp.alphanums + '_' + 'µ' + '-' + '+')
         sheet = pp.Group(pp.Keyword("SHEET") + integer * 3)
         rotation = pp.Group(pp.Char("R") + integer)
         wire = pp.Group(pp.Keyword("WIRE") + integer * 4)
@@ -281,6 +280,9 @@ class LTspice():
             return
         
         if name:
+            name = name.replace('_','•',1)
+            name = name.replace('_','')
+            name = name.replace('•', '_')
             self.nodes[n] = name
             return
         
@@ -369,6 +371,9 @@ class LTspice():
 
             if row[1] == 'InstName':
                 name = row[3]
+                name = name.replace('_','•',1)
+                name = name.replace('_','')
+                name = name.replace('•', '_')
                 continue
 
             if row[1] == 'Value':
