@@ -1,3 +1,4 @@
 lcapy
 pyparsing
+networkx
 ltparser

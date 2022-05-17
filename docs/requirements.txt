@@ -6,3 +6,4 @@ sphinx-rtd-theme
 lcapy
 ltparser
 pyparsing
+networkx
