@@ -82,6 +82,52 @@ class LTspiceValues(unittest.TestCase):
         value = ltparser.ltspice_value_to_number("4.7meg")
         self.assertAlmostEqual(value, 4.7e6)
 
+ltspice_files = [
+        "orientation-test.asc",
+        "orientation-test2.asc",
+        "passive-crossover.asc",
+        "passive-filter-band-block.asc",
+        "passive-filter-band-pass.asc",
+        "passive-filter-high-pass.asc",
+        "passive-filter-low-pass-omega.asc",
+        "passive-filter-low-pass.asc",
+        "passive-filter-low-with-load.asc",
+        "resonant-series.asc",
+        "simple0.asc",
+        "simple1.asc",
+        "simple2.asc",
+        "twin-t.asc",
+        ]
+
+class Netlist(unittest.TestCase):
+    def test_01_opening(self):
+        """Validate that all ltspice test files open."""
+        for fn in ltspice_files:
+            lt = ltparser.LTspice()
+            lt.read('tests/ltspice/' + fn)
+
+    def test_02_parsing(self):
+        """Validate that all ltspice test files parse."""
+        for fn in ltspice_files:
+            lt = ltparser.LTspice()
+            lt.read('tests/ltspice/' + fn)
+            lt.parse()
+
+    def test_03_netlist(self):
+        """Validate that all ltspice test files convert to netlists."""
+        for fn in ltspice_files:
+            lt = ltparser.LTspice()
+            lt.read('tests/ltspice/' + fn)
+            lt.make_netlist()
+
+    def test_04_circuits(self):
+        """Validate that all ltspice test files convert to circuits."""
+        for fn in ltspice_files:
+            lt = ltparser.LTspice()
+            lt.read('tests/ltspice/' + fn)
+            lt.make_netlist()
+            cct = lt.circuit()
+
 class ParserRLC(unittest.TestCase):
     def test_01_simple(self):
         """Simple circuit with voltage source and resistor."""
