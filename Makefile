@@ -24,6 +24,7 @@ clean:
 	rm -rf .tox
 	rm -rf build
 	rm -rf .pytest_cache
+	rm -rf tests/__pycache__
 
 notecheck:
 	make clean
