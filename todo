@@ -1,0 +1,14 @@
+Add nodes when two components attached together
+
+Add op-amp
+
+Add ports?
+
+Use value2 for signals
+
+Rewrite SINE() as {dc + amp*sin(omega*t)}
+
+figure out better solution for single_ground
+
+get docs working
+
