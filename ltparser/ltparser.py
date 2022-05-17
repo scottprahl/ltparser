@@ -19,6 +19,7 @@ Example::
 import matplotlib.pyplot as plt
 import pyparsing as pp
 import lcapy
+import networkx as nx
 
 __all__ = ('ltspice_value_to_number',
            'LTspice',
@@ -62,14 +63,28 @@ def ltspice_sine_parser(s):
     """Try and figure out offset, amplitude, and frequency."""
     number = pp.Combine(pp.Optional('.') + pp.Word(pp.nums) +
                         pp.Optional('.' + pp.Optional(pp.Word(pp.nums))))
-    sine = pp.Literal('SINE(') + number * 3 + pp.Literal(')')
+    sine = pp.Literal('SINE(') + pp.Optional(number)*3 + pp.Literal(')')
 
     parsed = sine.parseString(s)
-    dc = float(parsed[1])
-    amp = float(parsed[2])
-    omega0 = float(parsed[3])
+    dc = 0
+    amp = 1
+    omega = 0
+    if parsed[1] == ')':
+        return dc, amp, omega
 
-    return dc, amp, omega0
+    dc = float(parsed[1])
+
+    if parsed[2] == ')':
+        return dc, amp, omega
+
+    amp = float(parsed[2])
+    if parsed[3] == ')':
+        return dc, amp, omega
+
+    omega = float(parsed[3])
+
+    return dc, amp, omega
+
 
 def ltspice_value_to_number(s):
     """Convert LTspice value 4.7k to 4700."""
@@ -140,6 +155,7 @@ class LTspice():
         self.nodes = None
         self.netlist = None
         self.single_ground = True
+        self.graph = None
 
     def read(self, filename):
         """Read a file as contents."""
@@ -154,14 +170,16 @@ class LTspice():
         if byte2 == b'e':
             encodings = ['utf-8', 'mac-roman', 'windows-1250']
         elif byte2 == b'\x00':
-            encodings = ['utf-16']
+            encodings = ['utf-16-le']
         else:
             raise Exception('This is not an LTspice file.')
 
         for e in encodings:
             try:
                 with open(filename, 'r', encoding=e) as f:
-                    self.contents = f.read()
+                    x = f.read()
+                    self.contents = x.replace('µ','u')
+                    break
             except UnicodeError:
                 print('got unicode error with %s , trying different encoding' % e)
             else:
@@ -213,6 +231,7 @@ class LTspice():
 
     def sort_nodes(self):
         """Sorts the notes a dict with nodes sorted."""
+        return
         sorted_keys = sorted(self.nodes)
 
         grounds = 0
@@ -235,6 +254,8 @@ class LTspice():
         """Plot the nodes with labels."""
         miny = 1e6
         maxy = -1e6
+        plt.figure(figsize=(14,6))
+
         for key in self.nodes:
             x, y = key.split('_')
             node = self.nodes[key]
@@ -253,6 +274,18 @@ class LTspice():
         plt.ylim(maxy+0.1*(maxy-miny), miny-0.1*(maxy-miny))
         plt.show()
 
+    def add_node(self, x, y, name=False):
+        """Add a new node."""
+        n = node_key(x,y)
+        if n in self.nodes:
+            return
+        
+        if name:
+            self.nodes[n] = name
+            return
+        
+        self.nodes[n] = len(self.nodes)+1
+    
     def make_nodes_from_wires(self):
         """
         Produce the dictionary of nodes for all wires and grounds.
@@ -266,29 +299,21 @@ class LTspice():
         if self.parsed is None:
             return
 
-        # create all the ground nodes
+        # create ground nodes and other labelled nodes
+        ground_count = 0
         for line in self.parsed:
-            if line[0] == 'FLAG' and line[3] == '0':
-                n1 = node_key(line[1], line[2])
-                if n1 not in self.nodes:
-                    self.nodes[n1] = 0
+            if line[0] == 'FLAG':
+                self.add_node(line[1], line[2], line[3])
+                if line[3] == 0 or line[3]=='0':
+                    ground_count += 1
 
-        if len(self.nodes) > 1:
-            self.single_ground = False
-
+        self.single_ground = ground_count <= 1
+        
         # now wire nodes
         for line in self.parsed:
-            element = line[0]
-            if element != 'WIRE':
-                continue
-
-            n1 = node_key(line[1], line[2])
-            if n1 not in self.nodes:
-                self.nodes[n1] = len(self.nodes)+1
-
-            n2 = node_key(line[3], line[4])
-            if n2 not in self.nodes:
-                self.nodes[n2] = len(self.nodes)+1
+            if line[0] == 'WIRE':
+                self.add_node(line[1], line[2])
+                self.add_node(line[3], line[4])
 
     def wire_to_netlist(self, line):
         """Return netlist string for one wire in parsed data."""
@@ -299,8 +324,17 @@ class LTspice():
         n2 = self.nodes[node_key(line[3], line[4])]
 
         direction = the_direction(line)
+        
+        # make the wires all go right or down
+        if direction == 'up':
+            n1, n2 = n2, n1
+            direction = 'down'
+        if direction == 'left':
+            n1, n2 = n2, n1
+            direction = 'right'
 
-        return 'W %d %d; %s\n' % (n1, n2, direction)
+        self.graph.add_edge(n1,n2)
+        self.netlist += 'W %s %s; %s\n' % (n1, n2, direction)
 
     def symbol_to_netlist(self, line):
         """Return netlist string for symbol in parsed data."""
@@ -357,18 +391,23 @@ class LTspice():
             if not isinstance(value, float):
                 try:
                     dc, amp, omega0 = ltspice_sine_parser(value)
-                    return '%s %d %d ac %f; %s\n' % (name, node1, node2, amp, direction)
+                    self.graph.add_edge(node1,node2)
+                    self.netlist += '%s %s %s ac %f; %s\n' % (name, node1, node2, amp, direction)
+                    return
                 except pp.ParseException:
                     pass
 
         if kind == 'polcap':
             direction += ', kind=polar, invert'
 
-        return '%s %d %d %s; %s\n' % (name, node1, node2, value, direction)
+        self.graph.add_edge(node1,node2)
+        self.netlist += '%s %s %s %s; %s\n' % (name, node1, node2, value, direction)
 
     def make_netlist(self):
         """Process parsed LTspice data and create a simple netlist."""
         self.netlist = ''
+        self.graph = nx.Graph()
+
         if self.parsed is None:
             self.parse()
             if self.parsed is None:
@@ -376,17 +415,23 @@ class LTspice():
 
         if self.nodes is None:
             self.make_nodes_from_wires()
-
-        self.sort_nodes()
-#        self.print_nodes()
+            self.sort_nodes()
 
         for line in self.parsed:
 
             if line[0] == 'WIRE':
-                self.netlist += self.wire_to_netlist(line)
+                self.wire_to_netlist(line)
 
             if isinstance(line[0], pp.ParseResults):
-                self.netlist += self.symbol_to_netlist(line)
+                self.symbol_to_netlist(line)
+
+    def make_graph(self):
+        """Plot the network graph of the circuit."""
+        if self.graph is None:
+            self.make_netlist()
+
+        nx.draw(self.graph, with_labels=True, font_weight='bold')
+        plt.show()
 
     def match_node(self, x, y, kind, direction):
         """Match ends of simple component to existing nodes."""
@@ -428,7 +473,7 @@ class LTspice():
     def circuit(self):
         """Create a lcapy circuit."""
         if self.netlist is None:
-            return None
+            self.make_netlist()
 
         cct = lcapy.Circuit()
         for line in self.netlist.splitlines():
