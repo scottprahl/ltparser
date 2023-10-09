@@ -1,4 +1,5 @@
 lcapy
+matplotlib
+numpy
 pyparsing
-networkx
-ltparser
+pytest
