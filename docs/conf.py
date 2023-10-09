@@ -16,7 +16,8 @@ docstrings that follow the Google docstring format.
 import re
 import os.path
 
-project = 'pygrin'
+project = 'ltparser'
+master_doc = 'index'
 
 def get_init_property(prop):
     """Return property from __init__.py."""
@@ -29,10 +30,7 @@ def get_init_property(prop):
 
 release = get_init_property("__version__")
 author = get_init_property("__author__")
-
-master_doc = 'index'
-
-# -- General configuration ---------------------------------------------------
+copyright = get_init_property("__copyright__")
 
 # Sphinx extension modules
 extensions = [
@@ -47,7 +45,7 @@ napoleon_use_param = False
 napoleon_use_rtype = False
 
 # List of file patterns, relative to source directory, to exclude
-exclude_patterns = ['_build', '.tox', '**.ipynb_checkpoints']
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 # I execute the notebooks manually in advance. 
 nbsphinx_execute = 'never'
