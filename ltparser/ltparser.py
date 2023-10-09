@@ -32,6 +32,7 @@ component_offsets = {
     'current': [0, 0, 80],
     'polcap': [16, 0, 64],
     'ind': [16, 16, 96],
+    'Opamps/UniversalOpamp2': [[-32,-16], [-32,16], [32,-0], [0,-32], [0,32] ],
 }
 
 
@@ -189,7 +190,7 @@ class LTspice():
         """Parse LTspice .asc file contents."""
         heading = pp.Group(pp.Keyword("Version") + pp.Literal("4"))
         integer = pp.Combine(pp.Optional(pp.Char('-')) + pp.Word(pp.nums))
-        label = pp.Word(pp.alphanums + '_' + 'µ' + '-' + '+')
+        label = pp.Word(pp.alphanums + '_' + 'µ' + '-' + '+' + '/')
         sheet = pp.Group(pp.Keyword("SHEET") + integer * 3)
         rotation = pp.Group(pp.Char("R") + integer)
         wire = pp.Group(pp.Keyword("WIRE") + integer * 4)
