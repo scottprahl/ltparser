@@ -7,7 +7,7 @@ import pathlib
 
 import pytest
 
-examples = list(pathlib.Path("miepython/tests").glob("*.asc"))
+examples = list(pathlib.Path("ltparser/tests").glob("*.asc"))
 ids = [p.as_posix() for p in examples]
 
 

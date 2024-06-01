@@ -1,22 +1,45 @@
+.. |pypi| image:: https://img.shields.io/pypi/v/ltparser?color=68CA66
+   :target: https://pypi.org/project/ltparser/
+   :alt: pypi
+
+.. |github| image:: https://img.shields.io/github/v/tag/scottprahl/ltparser?label=github&color=68CA66
+   :target: https://github.com/scottprahl/ltparser
+   :alt: github
+
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/ltparser?label=conda&color=68CA66
+   :target: https://github.com/conda-forge/ltparser-feedstock
+   :alt: conda
+
+.. |doi| image:: https://zenodo.org/badge/116033943.svg
+   :target: https://zenodo.org/badge/latestdoi/116033943
+   :alt: doi  
+
+.. |license| image:: https://img.shields.io/github/license/scottprahl/ltparser?color=68CA66
+   :target: https://github.com/scottprahl/ltparser/blob/main/LICENSE.txt
+   :alt: License
+
+.. |test| image:: https://github.com/scottprahl/ltparser/actions/workflows/test.yaml/badge.svg
+   :target: https://github.com/scottprahl/ltparser/actions/workflows/test.yaml
+   :alt: Testing
+
+.. |docs| image:: https://readthedocs.org/projects/ltparser/badge?color=68CA66
+   :target: https://ltparser.readthedocs.io
+   :alt: Docs
+
+.. |downloads| image:: https://img.shields.io/pypi/dm/ltparser?color=68CA66
+   :target: https://pypi.org/project/ltparser/
+   :alt: Downloads
+
+
 ltparser
-========
+======
 
 by Scott Prahl
 
-.. image:: https://img.shields.io/pypi/v/ltparser.svg
-   :target: https://pypi.org/project/ltparser/
+|pypi| |github| |conda| |doi|
 
-.. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/scottprahl/ltparser/blob/master
+|license| |test| |docs| |downloads|
 
-.. image:: https://img.shields.io/badge/readthedocs-latest-blue.svg
-   :target: https://ltparser.readthedocs.io
-
-.. image:: https://img.shields.io/badge/github-code-green.svg
-   :target: https://github.com/scottprahl/ltparser
-
-.. image:: https://img.shields.io/badge/MIT-license-yellow.svg
-   :target: https://github.com/scottprahl/ltparser/blob/master/LICENSE.txt
 
 __________
 

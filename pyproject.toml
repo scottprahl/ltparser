@@ -14,5 +14,5 @@ ignore = [
     "Makefile",
     "release.txt",
     "requirements.txt",
-    "todo.rst",
+    "todo",
 ]

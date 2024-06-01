@@ -1,2 +1,5 @@
 include CHANGELOG.rst
 include CITATION.cff
+
+include tests/conftest.py
+include tests/examples/*.asc
