@@ -1,9 +1,6 @@
 .DS_Store
 *.pyc
-pygrin/__pycache__/
-docs/.ipynb_checkpoints
+ltparser/__pycache__/
 pygrin.egg-info/
 docs/_build/
 docs/api/
-dist/
-.tox/

@@ -1,19 +1,22 @@
 .. include:: ../README.rst
 
 .. toctree::
+   :maxdepth: 2
+
+.. toctree::
    :caption: Example Usage
    :hidden:
 
-    01-basics.ipynb
+   01-basics.ipynb
  
 .. toctree::
    :caption: API
    :hidden:
 
-    ltparser
+   ltparser
 
 .. toctree::
    :caption: Versions
    :hidden:
 
-    changelog
+   changelog

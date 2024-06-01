@@ -48,14 +48,14 @@ Usage
         import ltparser
 
         lt = ltparser.LTspice()
-        lt.read('../tests/ltspice/twin-t.asc')
+        lt.read('../examples/ltspice/twin-t.asc')
         lt.make_netlist()
         cct=lt.circuit()
         cct.draw(scale=0.5)
 
 produces
 
-.. image:: https://github.com/scottprahl/ltparser/blob/main/docs/twin-t.png
+.. image:: https://github.com/scottprahl/ltparser/blob/main/docs/twin-t.png?raw=true
 
 Installation
 ------------

@@ -1,13 +1,25 @@
 """
-Convert the contents of an LTspice .asc file to a netlit for use in lcapy.
+Convert the contents of an LTspice .asc file to a netlist for use in lcapy.
 
-Example::
-    import ltparser
-    >>>> lt = ltparser.LTspice()
-    >>>> lt.read('circuit.asc')
-    >>>> lt.make_netlist()
-    >>>> cct = lt.circuit()
-    >>>> cct.draw()
+Example:
+    First, import the required module:
+
+    .. code-block:: python
+
+        import ltparser
+
+    Then use the module to load, process, and visualize an LTspice schematic:
+
+    .. code-block:: python
+
+        >>> lt = ltparser.LTspice()
+        >>> lt.read('circuit.asc')
+        >>> lt.make_netlist()
+        >>> cct = lt.circuit()
+        >>> cct.draw()
+
+This sequence initializes the LTspice parser, reads a schematic, creates a netlist,
+and finally visualizes the circuit using lcapy.
 """
 import matplotlib.pyplot as plt
 import pyparsing as pp

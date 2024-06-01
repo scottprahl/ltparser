@@ -1,5 +1,5 @@
-API for `pygrin` package
+API for `ltparser` package
 ========================
 
-.. automodapi:: pygrin.pygrin
+.. automodapi:: ltparser.ltparser
    :no-inheritance-diagram:

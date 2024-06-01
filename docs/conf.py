@@ -45,14 +45,14 @@ napoleon_use_param = False
 napoleon_use_rtype = False
 
 # List of file patterns, relative to source directory, to exclude
-exclude_patterns = ['_build', '**.ipynb_checkpoints']
+exclude_patterns = ['_build', '**.ipynb_checkpoints', '02-basics.ipynb']
 
 # I execute the notebooks manually in advance. 
 nbsphinx_execute = 'never'
 nbsphinx_allow_errors = True
 
 # Add type of source files
-source_suffix = ['.rst', '.ipynb']
+source_suffix = ['.rst']
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'sphinx_rtd_theme'

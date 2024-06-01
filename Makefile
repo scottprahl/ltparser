@@ -11,13 +11,12 @@ html:
 	open docs/_build/index.html
 
 clean:
-	rm -rf dist
-	rm -rf ltparser.egg-info
-	rm -rf ltparser/__pycache__
+	rm -rf .ruff_cache
+	rm -rf .pytest_cache
+	rm -rf docs/.ipynb_checkpoints
 	rm -rf docs/_build
 	rm -rf docs/api
-	rm -rf build
-	rm -rf .pytest_cache
+	rm -rf ltparser/__pycache__
 	rm -rf tests/__pycache__
 
 notecheck:
