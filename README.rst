@@ -32,16 +32,9 @@
 
 
 ltparser
-======
+========
 
 by Scott Prahl
-
-|pypi| |github| |conda| |doi|
-
-|license| |test| |docs| |downloads|
-
-
-__________
 
 Simple parser for converting LTspice `.asc` files to simple netlists.  Only a
 few LTspice elements are currently supported.
@@ -62,7 +55,7 @@ Usage
 
 produces
 
-.. image:: twin-t.png
+.. image:: https://github.com/scottprahl/ltparser/blob/main/docs/twin-t.png
 
 Installation
 ------------
