@@ -36,7 +36,7 @@ ltparser
 
 by Scott Prahl
 
-Simple parser for converting LTspice `.asc` files to simple netlists.  Only a
+Simple parser for converting LTspice `.asc` files to netlists.  Only a
 few LTspice elements are currently supported.
 
 Usage

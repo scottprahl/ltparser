@@ -3,13 +3,8 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = docs
 BUILDDIR      = docs/_build
 
-pycheck:
-	-pylint ltparser/ltparser.py
-	-pylint ltparser/__init__.py
-
-doccheck:
-	-pydocstyle ltparser/ltparser.py
-	-pydocstyle ltparser/__init__.py
+lint:
+	-ruff check .
 
 html:
 	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
@@ -21,7 +16,6 @@ clean:
 	rm -rf ltparser/__pycache__
 	rm -rf docs/_build
 	rm -rf docs/api
-	rm -rf .tox
 	rm -rf build
 	rm -rf .pytest_cache
 	rm -rf tests/__pycache__
@@ -33,8 +27,8 @@ notecheck:
 
 rcheck:
 	make clean
-	make pycheck
-	make doccheck
+	make lint
+	make test
 	make notecheck
 	touch docs/*ipynb
 	touch docs/*rst
@@ -44,6 +38,6 @@ rcheck:
 	tox
 
 test:
-	tox
+	pytest tests/tests.py
 
-.PHONY: clean check rcheck html
+.PHONY: clean lint rcheck html

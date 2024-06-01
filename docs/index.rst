@@ -4,17 +4,16 @@
    :caption: Example Usage
    :hidden:
 
-   01-basics.ipynb
-   02-basics.ipynb
-
+    01-basics.ipynb
+ 
 .. toctree::
    :caption: API
    :hidden:
 
-   ltparser
+    ltparser
 
 .. toctree::
    :caption: Versions
    :hidden:
 
-   changelog
+    changelog

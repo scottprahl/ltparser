@@ -1,9 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=unused-variable
-# pylint: disable=too-many-locals
-# pylint: disable=no-member
-# pylint: disable=consider-using-f-string
-# pylint: disable=attribute-defined-outside-init
 """
 Convert the contents of an LTspice .asc file to a netlit for use in lcapy.
 
@@ -363,7 +357,7 @@ class LTspice():
 
         name = ''
         value = ''
-        value2 = None
+        _value2 = None
         for sub_line in line:
             row = list(sub_line)
 
@@ -382,7 +376,7 @@ class LTspice():
                 continue
 
             if row[1] == 'Value2':
-                value2 = row[3]
+                _value2 = row[3]
                 continue
 
         node1, node2 = self.match_node(x, y, kind, direction)

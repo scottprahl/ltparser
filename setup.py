@@ -1,3 +1,4 @@
+"""Setup for ltparser module."""
 import re
 import os.path
 from setuptools import setup
