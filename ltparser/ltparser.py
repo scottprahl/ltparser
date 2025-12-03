@@ -21,24 +21,30 @@ Example:
 This sequence initializes the LTspice parser, reads a schematic, creates a netlist,
 and finally visualizes the circuit using lcapy.
 """
+
 import matplotlib.pyplot as plt
 import pyparsing as pp
 import lcapy
 import networkx as nx
 
-__all__ = ('ltspice_value_to_number',
-           'LTspice',
-           )
+__all__ = (
+    "ltspice_value_to_number",
+    "LTspice",
+)
+
+# Specific exception
+class LTspiceFileError(ValueError):
+    """Raised when file is not a valid LTspice file."""
 
 component_offsets = {
     # each entry has x_off, y_off, and length
-    'voltage': [0, 16, 96],
-    'cap': [16, 0, 64],
-    'res': [16, 16, 96],
-    'current': [0, 0, 80],
-    'polcap': [16, 0, 64],
-    'ind': [16, 16, 96],
-    'Opamps/UniversalOpamp2': [[-32,-16], [-32,16], [32,-0], [0,-32], [0,32] ],
+    "voltage": [0, 16, 96],
+    "cap": [16, 0, 64],
+    "res": [16, 16, 96],
+    "current": [0, 0, 80],
+    "polcap": [16, 0, 64],
+    "ind": [16, 16, 96],
+    "Opamps/UniversalOpamp2": [[-32, -16], [-32, 16], [32, -0], [0, -32], [0, 32]],
 }
 
 
@@ -56,35 +62,36 @@ def the_direction(line):
 
     if x1 == x2:
         if y1 > y2:
-            return 'up'
-        return 'down'
+            return "up"
+        return "down"
 
     if x1 > x2:
-        return 'left'
+        return "left"
 
-    return 'right'
+    return "right"
 
 
 def ltspice_sine_parser(s):
     """Try and figure out offset, amplitude, and frequency."""
-    number = pp.Combine(pp.Optional('.') + pp.Word(pp.nums) +
-                        pp.Optional('.' + pp.Optional(pp.Word(pp.nums))))
-    sine = pp.Literal('SINE(') + pp.Optional(number)*3 + pp.Literal(')')
+    number = pp.Combine(
+        pp.Optional(".") + pp.Word(pp.nums) + pp.Optional("." + pp.Optional(pp.Word(pp.nums)))
+    )
+    sine = pp.Literal("SINE(") + pp.Optional(number) * 3 + pp.Literal(")")
 
     parsed = sine.parseString(s)
     dc = 0
     amp = 1
     omega = 0
-    if parsed[1] == ')':
+    if parsed[1] == ")":
         return dc, amp, omega
 
     dc = float(parsed[1])
 
-    if parsed[2] == ')':
+    if parsed[2] == ")":
         return dc, amp, omega
 
     amp = float(parsed[2])
-    if parsed[3] == ')':
+    if parsed[3] == ")":
         return dc, amp, omega
 
     omega = float(parsed[3])
@@ -94,17 +101,17 @@ def ltspice_sine_parser(s):
 
 def ltspice_value_to_number(s):
     """Convert LTspice value 4.7k to 4700."""
-#    print("converting ", s)
+    #    print("converting ", s)
     # sometimes "" shows up as the value
     empty = pp.Literal('""')
     try:
         empty.parseString(s)
-        return ''
+        return ""
     except pp.ParseException:
         pass
 
     # return things like {R} untouched
-    parameter = pp.Combine('{' + pp.restOfLine())
+    parameter = pp.Combine("{" + pp.restOfLine())
     try:
         parameter.parseString(s)
         return s
@@ -113,14 +120,21 @@ def ltspice_value_to_number(s):
 
     # this does not handle 1e-3
     # this does not handle 1e-3
-    number = pp.Combine(pp.Optional('.') + pp.Word(pp.nums) +
-                        pp.Optional('.' + pp.Optional(pp.Word(pp.nums))))
+    number = pp.Combine(
+        pp.Optional(".") + pp.Word(pp.nums) + pp.Optional("." + pp.Optional(pp.Word(pp.nums)))
+    )
 
     # the SI prefixes
-    prefix = pp.CaselessLiteral('MEG') | pp.CaselessLiteral('F') | \
-             pp.CaselessLiteral('P') | pp.CaselessLiteral('N') | \
-             pp.CaselessLiteral('U') | pp.CaselessLiteral('M') | \
-             pp.CaselessLiteral('K') | pp.Literal('µ')
+    prefix = (
+        pp.CaselessLiteral("MEG")
+        | pp.CaselessLiteral("F")
+        | pp.CaselessLiteral("P")
+        | pp.CaselessLiteral("N")
+        | pp.CaselessLiteral("U")
+        | pp.CaselessLiteral("M")
+        | pp.CaselessLiteral("K")
+        | pp.Literal("µ")
+    )
 
     # use restOfLine to discard possible unwanted units
     lt_number = number + pp.Optional(prefix) + pp.restOfLine()
@@ -130,19 +144,19 @@ def ltspice_value_to_number(s):
         x = float(parsed[0])
 
         # change number based on unit prefix
-        if parsed[1] == 'F':
+        if parsed[1] == "F":
             x *= 1e-15
-        elif parsed[1] == 'P':
+        elif parsed[1] == "P":
             x *= 1e-12
-        elif parsed[1] == 'N':
+        elif parsed[1] == "N":
             x *= 1e-9
-        elif parsed[1] == 'U' or parsed[1] == 'µ':
+        elif parsed[1] == "U" or parsed[1] == "µ":
             x *= 1e-6
-        elif parsed[1] == 'M':
+        elif parsed[1] == "M":
             x *= 1e-3
-        elif parsed[1] == 'K':
+        elif parsed[1] == "K":
             x *= 1e3
-        elif parsed[1] == 'MEG':
+        elif parsed[1] == "MEG":
             x *= 1e6
         return x
     except pp.ParseException:
@@ -151,7 +165,7 @@ def ltspice_value_to_number(s):
     return s
 
 
-class LTspice():
+class LTspice:
     """Class to convert LTspice files to lcapy circuits."""
 
     def __init__(self):
@@ -166,64 +180,60 @@ class LTspice():
     def read(self, filename):
         """Read a file as contents."""
         encodings = []
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             byte1 = f.read(1)
             byte2 = f.read(1)
 
-        if byte1 != b'V':
-            raise Exception('This is not an LTspice file.')
+        if byte1 != b"V":
+            raise LTspiceFileError("This is not an LTspice file.")
 
-        if byte2 == b'e':
-            encodings = ['utf-8', 'mac-roman', 'windows-1250']
-        elif byte2 == b'\x00':
-            encodings = ['utf-16-le']
+        if byte2 == b"e":
+            encodings = ["utf-8", "mac-roman", "windows-1250"]
+        elif byte2 == b"\x00":
+            encodings = ["utf-16-le"]
         else:
-            raise Exception('This is not an LTspice file.')
+            raise LTspiceFileError("This is not an LTspice file.")
 
         for e in encodings:
             try:
-                with open(filename, 'r', encoding=e) as f:
+                with open(filename, "r", encoding=e) as f:
                     x = f.read()
-                    self.contents = x.replace('µ','u')
+                    self.contents = x.replace("µ", "u")
                     break
             except UnicodeError:
-                print('got unicode error with %s , trying different encoding' % e)
+                print("got unicode error with %s , trying different encoding" % e)
             else:
-                print('opening the file with encoding:  %s ' % e)
+                print("opening the file with encoding:  %s " % e)
                 break
 
     def parse(self):
         """Parse LTspice .asc file contents."""
         heading = pp.Group(pp.Keyword("Version") + pp.Literal("4"))
-        integer = pp.Combine(pp.Optional(pp.Char('-')) + pp.Word(pp.nums))
-        label = pp.Word(pp.alphanums + '_' + 'µ' + '-' + '+' + '/')
+        integer = pp.Combine(pp.Optional(pp.Char("-")) + pp.Word(pp.nums))
+        label = pp.Word(pp.alphanums + "_" + "µ" + "-" + "+" + "/")
         sheet = pp.Group(pp.Keyword("SHEET") + integer * 3)
         rotation = pp.Group(pp.Char("R") + integer)
         wire = pp.Group(pp.Keyword("WIRE") + integer * 4)
         window = pp.Group(pp.Keyword("WINDOW") + pp.restOfLine())
-        symbol = pp.Group(pp.Keyword("SYMBOL") + label + integer*2 +
-                          rotation)
-        attr = pp.Group(pp.Keyword("SYMATTR") + label + pp.White() +
-                        pp.restOfLine())
+        symbol = pp.Group(pp.Keyword("SYMBOL") + label + integer * 2 + rotation)
+        attr = pp.Group(pp.Keyword("SYMATTR") + label + pp.White() + pp.restOfLine())
         flag = pp.Group(pp.Keyword("FLAG") + integer * 2 + label)
         iopin = pp.Group(pp.Keyword("IOPIN") + integer * 2 + label)
         text = pp.Group(pp.Keyword("TEXT") + pp.restOfLine())
         line = pp.Group(pp.Keyword("LINE") + pp.restOfLine())
         rect = pp.Group(pp.Keyword("RECTANGLE") + pp.restOfLine())
 
-        component = pp.Group(symbol + pp.Dict(pp.ZeroOrMore(window)) +
-                             pp.Dict(pp.ZeroOrMore(attr)))
+        component = pp.Group(symbol + pp.Dict(pp.ZeroOrMore(window)) + pp.Dict(pp.ZeroOrMore(attr)))
         linetypes = wire | flag | iopin | component | line | text | rect
 
         grammar = heading + sheet + pp.Dict(pp.ZeroOrMore(linetypes))
         if self.contents is not None:
             self.parsed = grammar.parseString(self.contents)
 
-
     def print_parsed(self):
         """Better visualization of parsed LTspice file."""
         if self.parsed is None:
-            print('Nothing parsed yet.')
+            print("Nothing parsed yet.")
 
         for line in self.parsed:
             element = line[0]
@@ -231,39 +241,40 @@ class LTspice():
             if isinstance(element, pp.ParseResults):
                 print(line[0])
                 for i in range(1, len(line)):
-                    print('    ', line[i])
+                    print("    ", line[i])
                 continue
             print(element, line[1:])
 
     def sort_nodes(self):
         """Sorts the notes a dict with nodes sorted."""
         return
-#         sorted_keys = sorted(self.nodes)
-#
-#         grounds = 0
-#         for key in sorted_keys:
-#             if self.nodes[key] == 0:
-#                 grounds += 1
-#
-#         count = 1
-#         for key in sorted_keys:
-#             if self.nodes[key] != 0:
-#                 self.nodes[key] = count
-#                 count += 1
+
+    #         sorted_keys = sorted(self.nodes)
+    #
+    #         grounds = 0
+    #         for key in sorted_keys:
+    #             if self.nodes[key] == 0:
+    #                 grounds += 1
+    #
+    #         count = 1
+    #         for key in sorted_keys:
+    #             if self.nodes[key] != 0:
+    #                 self.nodes[key] = count
+    #                 count += 1
 
     def print_nodes(self):
         """Print the notes a dict with nodes sorted."""
         for key in self.nodes:
-            print(key, ' : ', self.nodes[key])
+            print(key, " : ", self.nodes[key])
 
     def plot_nodes(self):
         """Plot the nodes with labels."""
         miny = 1e6
         maxy = -1e6
-        plt.figure(figsize=(14,6))
+        plt.figure(figsize=(14, 6))
 
         for key in self.nodes:
-            x, y = key.split('_')
+            x, y = key.split("_")
             node = self.nodes[key]
             xx = int(x)
             yy = int(y)
@@ -271,29 +282,29 @@ class LTspice():
             miny = min(yy, miny)
             maxy = max(yy, maxy)
             if node == 0:
-                plt.plot([xx], [yy], 'ok', markersize=3)
-                plt.text(xx, yy, 'gnd', ha='center', va='top')
+                plt.plot([xx], [yy], "ok", markersize=3)
+                plt.text(xx, yy, "gnd", ha="center", va="top")
             else:
-                plt.plot([xx], [yy], 'ob', markersize=3)
-                plt.text(xx, yy, self.nodes[key], color='blue', ha='right', va='bottom')
+                plt.plot([xx], [yy], "ob", markersize=3)
+                plt.text(xx, yy, self.nodes[key], color="blue", ha="right", va="bottom")
 
-        plt.ylim(maxy+0.1*(maxy-miny), miny-0.1*(maxy-miny))
+        plt.ylim(maxy + 0.1 * (maxy - miny), miny - 0.1 * (maxy - miny))
         plt.show()
 
     def add_node(self, x, y, name=False):
         """Add a new node."""
-        n = node_key(x,y)
+        n = node_key(x, y)
         if n in self.nodes:
             return
 
         if name:
-            name = name.replace('_','•',1)
-            name = name.replace('_','')
-            name = name.replace('•', '_')
+            name = name.replace("_", "•", 1)
+            name = name.replace("_", "")
+            name = name.replace("•", "_")
             self.nodes[n] = name
             return
 
-        self.nodes[n] = len(self.nodes)+1
+        self.nodes[n] = len(self.nodes) + 1
 
     def make_nodes_from_wires(self):
         """
@@ -311,22 +322,22 @@ class LTspice():
         # create ground nodes and other labelled nodes
         ground_count = 0
         for line in self.parsed:
-            if line[0] == 'FLAG':
+            if line[0] == "FLAG":
                 self.add_node(line[1], line[2], line[3])
-                if line[3] == 0 or line[3]=='0':
+                if line[3] == 0 or line[3] == "0":
                     ground_count += 1
 
         self.single_ground = ground_count <= 1
 
         # now wire nodes
         for line in self.parsed:
-            if line[0] == 'WIRE':
+            if line[0] == "WIRE":
                 self.add_node(line[1], line[2])
                 self.add_node(line[3], line[4])
 
     def wire_to_netlist(self, line):
         """Return netlist string for one wire in parsed data."""
-        if line[0] != 'WIRE':
+        if line[0] != "WIRE":
             return
 
         n1 = self.nodes[node_key(line[1], line[2])]
@@ -335,89 +346,89 @@ class LTspice():
         direction = the_direction(line)
 
         # make the wires all go right or down
-        if direction == 'up':
+        if direction == "up":
             n1, n2 = n2, n1
-            direction = 'down'
-        if direction == 'left':
+            direction = "down"
+        if direction == "left":
             n1, n2 = n2, n1
-            direction = 'right'
+            direction = "right"
 
-        self.graph.add_edge(n1,n2)
-        self.netlist += 'W %s %s; %s\n' % (n1, n2, direction)
+        self.graph.add_edge(n1, n2)
+        self.netlist += "W %s %s; %s\n" % (n1, n2, direction)
 
     def symbol_to_netlist(self, line):
         """Return netlist string for symbol in parsed data."""
         first = list(line[0])
-        if first[0] != 'SYMBOL':
+        if first[0] != "SYMBOL":
             return
 
         kind = first[1]
-#        print("\nKind==", kind)
+        #        print("\nKind==", kind)
 
         x = int(first[2])
         y = int(first[3])
 
         rotation = list(first[4])[1]
-        if rotation == '0':
-            direction = 'down'
-        elif rotation == '90':
-            direction = 'left'
-        elif rotation == '180':
-            direction = 'up'
+        if rotation == "0":
+            direction = "down"
+        elif rotation == "90":
+            direction = "left"
+        elif rotation == "180":
+            direction = "up"
         else:
-            direction = 'right'
+            direction = "right"
 
-        name = ''
-        value = ''
+        name = ""
+        value = ""
         _value2 = None
         for sub_line in line:
             row = list(sub_line)
 
-            if row[0] != 'SYMATTR':
+            if row[0] != "SYMATTR":
                 continue
 
-            if row[1] == 'InstName':
+            if row[1] == "InstName":
                 name = row[3]
-                name = name.replace('_','•',1)
-                name = name.replace('_','')
-                name = name.replace('•', '_')
+                name = name.replace("_", "•", 1)
+                name = name.replace("_", "")
+                name = name.replace("•", "_")
                 continue
 
-            if row[1] == 'Value':
+            if row[1] == "Value":
                 value = row[3]
                 continue
 
-            if row[1] == 'Value2':
+            if row[1] == "Value2":
                 _value2 = row[3]
                 continue
 
         node1, node2 = self.match_node(x, y, kind, direction)
 
-        if value != '':
+        if value != "":
             value = ltspice_value_to_number(value)
 
-        if kind == 'current':
-            direction += ', invert'
+        if kind == "current":
+            direction += ", invert"
 
-        if kind in ('current', 'voltage'):
+        if kind in ("current", "voltage"):
             if not isinstance(value, float):
                 try:
-                    dc, amp, omega0 = ltspice_sine_parser(value)
-                    self.graph.add_edge(node1,node2)
-                    self.netlist += '%s %s %s ac %f; %s\n' % (name, node1, node2, amp, direction)
+                    _dc, amp, _omega0 = ltspice_sine_parser(value)
+                    self.graph.add_edge(node1, node2)
+                    self.netlist += "%s %s %s ac %f; %s\n" % (name, node1, node2, amp, direction)
                     return
                 except pp.ParseException:
                     pass
 
-        if kind == 'polcap':
-            direction += ', kind=polar, invert'
+        if kind == "polcap":
+            direction += ", kind=polar, invert"
 
-        self.graph.add_edge(node1,node2)
-        self.netlist += '%s %s %s %s; %s\n' % (name, node1, node2, value, direction)
+        self.graph.add_edge(node1, node2)
+        self.netlist += "%s %s %s %s; %s\n" % (name, node1, node2, value, direction)
 
     def make_netlist(self):
         """Process parsed LTspice data and create a simple netlist."""
-        self.netlist = ''
+        self.netlist = ""
         self.graph = nx.Graph()
 
         if self.parsed is None:
@@ -431,7 +442,7 @@ class LTspice():
 
         for line in self.parsed:
 
-            if line[0] == 'WIRE':
+            if line[0] == "WIRE":
                 self.wire_to_netlist(line)
 
             if isinstance(line[0], pp.ParseResults):
@@ -442,43 +453,46 @@ class LTspice():
         if self.graph is None:
             self.make_netlist()
 
-        nx.draw(self.graph, with_labels=True, font_weight='bold')
+        nx.draw(self.graph, with_labels=True, font_weight="bold")
         plt.show()
 
     def match_node(self, x, y, kind, direction):
         """Match ends of simple component to existing nodes."""
         x_off, y_off, length = component_offsets[kind]
-#        print("Original %d %d %s x_off=%d y_off=%d length=%d" %
-#              (x, y, direction, x_off, y_off, length))
+        #        print("Original %d %d %s x_off=%d y_off=%d length=%d" %
+        #              (x, y, direction, x_off, y_off, length))
 
-        if direction == 'left':
-            key1 = node_key(x-y_off, y+x_off)
-            key2 = node_key(x-length, y+x_off)
+        if direction == "left":
+            key1 = node_key(x - y_off, y + x_off)
+            key2 = node_key(x - length, y + x_off)
 
-        elif direction == 'right':
-            key1 = node_key(x+y_off, y-x_off)
-            key2 = node_key(x+length, y-x_off)
+        elif direction == "right":
+            key1 = node_key(x + y_off, y - x_off)
+            key2 = node_key(x + length, y - x_off)
 
-        elif direction == 'down':
-            key1 = node_key(x+x_off, y+y_off)
-            key2 = node_key(x+x_off, y+length)
+        elif direction == "down":
+            key1 = node_key(x + x_off, y + y_off)
+            key2 = node_key(x + x_off, y + length)
 
-        elif direction == 'up':
-            key1 = node_key(x-x_off, y-y_off)
-            key2 = node_key(x-x_off, y-length)
+        elif direction == "up":
+            key1 = node_key(x - x_off, y - y_off)
+            key2 = node_key(x - x_off, y - length)
+        else:
+            key1 = None
+            key2 = None
 
         if key1 not in self.nodes:
-            n1 = '?'
+            n1 = "?"
         else:
             n1 = self.nodes[key1]
 
         if key2 not in self.nodes:
-            n2 = '?'
+            n2 = "?"
         else:
             n2 = self.nodes[key2]
 
-#        print("pt1 %s ==> %s" % (key1,n1))
-#        print("pt2 %s ==> %s" % (key2,n2))
+        #        print("pt1 %s ==> %s" % (key1,n1))
+        #        print("pt2 %s ==> %s" % (key2,n2))
 
         return n1, n2
 
@@ -492,5 +506,5 @@ class LTspice():
             cct.add(line)
 
         if not self.single_ground:
-            cct.add(';autoground=True')
+            cct.add(";autoground=True")
         return cct

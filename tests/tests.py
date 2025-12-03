@@ -4,21 +4,22 @@ import unittest
 import ltparser
 
 ltspice_files = [
-        "orientation-test.asc",
-        "orientation-test2.asc",
-        "passive-crossover.asc",
-        "passive-filter-band-block.asc",
-        "passive-filter-band-pass.asc",
-        "passive-filter-high-pass.asc",
-        "passive-filter-low-pass-omega.asc",
-        "passive-filter-low-pass.asc",
-        "passive-filter-low-with-load.asc",
-        "resonant-series.asc",
-        "simple0.asc",
-        "simple1.asc",
-        "simple2.asc",
-        "twin-t.asc",
-        ]
+    "orientation-test.asc",
+    "orientation-test2.asc",
+    "passive-crossover.asc",
+    "passive-filter-band-block.asc",
+    "passive-filter-band-pass.asc",
+    "passive-filter-high-pass.asc",
+    "passive-filter-low-pass-omega.asc",
+    "passive-filter-low-pass.asc",
+    "passive-filter-low-with-load.asc",
+    "resonant-series.asc",
+    "simple0.asc",
+    "simple1.asc",
+    "simple2.asc",
+    "twin-t.asc",
+]
+
 
 class LTspiceValues(unittest.TestCase):
     """Tests for different number formats."""
@@ -95,114 +96,119 @@ class LTspiceValues(unittest.TestCase):
         value = ltparser.ltspice_value_to_number("4.7meg")
         self.assertAlmostEqual(value, 4.7e6)
 
+
 class Netlist(unittest.TestCase):
     """File handling."""
+
     def test_01_opening(self):
         """Validate that all ltspice test files open."""
         for fn in ltspice_files:
             lt = ltparser.LTspice()
-            lt.read('tests/examples/' + fn)
+            lt.read("tests/examples/" + fn)
 
     def test_02_parsing(self):
         """Validate that all ltspice test files parse."""
         for fn in ltspice_files:
             lt = ltparser.LTspice()
-            lt.read('tests/examples/' + fn)
+            lt.read("tests/examples/" + fn)
             lt.parse()
 
     def test_03_netlist(self):
         """Validate that all ltspice test files convert to netlists."""
         for fn in ltspice_files:
             lt = ltparser.LTspice()
-            lt.read('tests/examples/' + fn)
+            lt.read("tests/examples/" + fn)
             lt.make_netlist()
 
     def test_04_circuits(self):
         """Validate that all ltspice test files convert to circuits."""
         for fn in ltspice_files:
             lt = ltparser.LTspice()
-            lt.read('tests/examples/' + fn)
+            lt.read("tests/examples/" + fn)
             lt.make_netlist()
             _cct = lt.circuit()
 
+
 class ParserRLC(unittest.TestCase):
     """Simple RLC circuit tests."""
+
     def test_01_simple(self):
         """Simple circuit with voltage source and resistor."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"simple1.asc")
+        lt.read(path + "simple1.asc")
         lt.parse()
 
     def test_02_simple_with_ground(self):
         """Simple circuit with resistor with multiple grounds."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"simple1.asc")
+        lt.read(path + "simple1.asc")
         lt.parse()
 
     def test_03_orientation(self):
         """Circuit to ensure symbol orientations are correct."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"orientation-test.asc")
+        lt.read(path + "orientation-test.asc")
         lt.parse()
 
     def test_04_orientation(self):
         """Circuit to ensure symbol orientations are correct."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"orientation-test2.asc")
+        lt.read(path + "orientation-test2.asc")
         lt.parse()
 
     def test_05_low_pass_filter(self):
         """Passive low pass filter."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"passive-filter-low-pass.asc")
+        lt.read(path + "passive-filter-low-pass.asc")
         lt.parse()
 
     def test_06_low_pass_filter(self):
         """Passive low pass filter but with a load."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"passive-filter-low-with-load.asc")
+        lt.read(path + "passive-filter-low-with-load.asc")
         lt.parse()
 
     def test_07_high_pass_filter(self):
         """Passive low pass filter but with a load."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"passive-filter-high-pass.asc")
+        lt.read(path + "passive-filter-high-pass.asc")
         lt.parse()
 
     def test_08_band_pass_filter(self):
         """Passive low pass filter but with a load."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"passive-filter-band-pass.asc")
+        lt.read(path + "passive-filter-band-pass.asc")
         lt.parse()
 
     def test_09_band_block_filter(self):
         """Passive low pass filter but with a load."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"passive-filter-band-block.asc")
+        lt.read(path + "passive-filter-band-block.asc")
         lt.parse()
 
     def test_10_series_resonant(self):
         """Resonant series circuit."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"resonant-series.asc")
+        lt.read(path + "resonant-series.asc")
         lt.parse()
 
     def test_11_circuit_with_param(self):
         """Passive low pass filter but with a load."""
-        path = 'tests/examples/'
+        path = "tests/examples/"
         lt = ltparser.LTspice()
-        lt.read(path +"passive-filter-low-pass-omega.asc")
+        lt.read(path + "passive-filter-low-pass-omega.asc")
         lt.parse()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
