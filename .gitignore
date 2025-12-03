@@ -1,6 +1,28 @@
 .DS_Store
 *.pyc
-ltparser/__pycache__/
-pygrin.egg-info/
+.cache/
+.jupyterlite.doit.db
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+dist/
+docs/.ipynb_checkpoints/
 docs/_build/
 docs/api/
+ltparser/__pycache__
+ltparser.egg-info/
+todo
+lite/
+tests/__pycache__/
+
+# JupyterLite build artifacts
+_site/
+.lite_src/
+.jupyterlite.doit.db
+
+# GitHub Pages deployment worktree
+.gh-pages/
+
+# Temporary files
+.tmp
