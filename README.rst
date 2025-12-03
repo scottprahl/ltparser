@@ -42,16 +42,16 @@ few LTspice elements are currently supported.
 Usage
 -----
 
-    Example::
+..code-block:: python
 
-        import lcapy
-        import ltparser
+    import lcapy
+    import ltparser
 
-        lt = ltparser.LTspice()
-        lt.read('../examples/ltspice/twin-t.asc')
-        lt.make_netlist()
-        cct=lt.circuit()
-        cct.draw(scale=0.5)
+    lt = ltparser.LTspice()
+    lt.read('../examples/ltspice/twin-t.asc')
+    lt.make_netlist()
+    cct=lt.circuit()
+    cct.draw(scale=0.5)
 
 produces
 
