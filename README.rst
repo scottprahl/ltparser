@@ -34,7 +34,10 @@
 ltparser
 ========
 
-by Scott Prahl
+|pypi| |github| |conda| |doi|
+
+|license| |test| |docs| |downloads|
+
 
 Simple parser for converting LTspice `.asc` files to netlists.  Only a
 few LTspice elements are currently supported.
@@ -42,7 +45,7 @@ few LTspice elements are currently supported.
 Usage
 -----
 
-..code-block:: python
+.. code-block:: python
 
     import lcapy
     import ltparser
