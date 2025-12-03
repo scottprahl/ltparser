@@ -7,15 +7,14 @@ on:    # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  publish:
+  build-and-publish:
     runs-on: ubuntu-latest
-
     environment:
-      name: pypi repository
+      name: pypi-repository
       url: https://pypi.org/p/ltparser
-
     permissions:
-      id-token: write
+      contents: read      # checkout
+      id-token: write     # OIDC for Trusted Publishing
 
     steps:
       - name: Checkout code
@@ -28,11 +27,11 @@ jobs:
 
       - name: Build
         run: |
-          pip install setuptools wheel twine build
-          pip install -r requirements.txt
+          pip install build
           python -m build
 
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
+          attestations: true
