@@ -72,6 +72,8 @@ ignore = [
   "Makefile",
   "release.txt",
   "requirements-dev.txt",
+  "requirements.txt",
+  "todo",
 ]
 
 [tool.pytest.ini_options]
@@ -87,8 +89,10 @@ disable = [
     "consider-using-f-string",
     "too-many-statements",
     "duplicate-code",
+    "too-many-branches",
     "C0114",
     "C0116",
+    "R0912",
 ]
 
 [tool.black]
