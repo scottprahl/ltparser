@@ -160,7 +160,6 @@ rcheck:
 	@$(MAKE) manifest-check
 	@$(MAKE) pyroma-check
 	@$(MAKE) html
-	@$(MAKE) lite
 	@$(MAKE) dist
 	@$(MAKE) test
 	@$(MAKE) note-test
