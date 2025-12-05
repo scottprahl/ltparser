@@ -29,12 +29,16 @@ import networkx as nx
 
 __all__ = (
     "ltspice_value_to_number",
+    "rotate_point",
+    "node_key",
     "LTspice",
 )
+
 
 # Specific exception
 class LTspiceFileError(ValueError):
     """Raised when file is not a valid LTspice file."""
+
 
 component_offsets = {
     # each entry has x_off, y_off, and length
@@ -69,6 +73,26 @@ def the_direction(line):
         return "left"
 
     return "right"
+
+
+def rotate_point(x, y, direction):
+    """Rotate a point based on component direction.
+
+    Args:
+        x: X coordinate relative to component origin
+        y: Y coordinate relative to component origin
+        direction: One of 'down', 'left', 'up', 'right'
+
+    Returns:
+        Tuple of (rotated_x, rotated_y)
+    """
+    rotations = {
+        "down": lambda px, py: (px, py),  # 0 degrees
+        "left": lambda px, py: (py, -px),  # 90 degrees CCW
+        "up": lambda px, py: (-px, -py),  # 180 degrees
+        "right": lambda px, py: (-py, px),  # 270 degrees CCW
+    }
+    return rotations[direction](x, y)
 
 
 def ltspice_sine_parser(s):
@@ -335,6 +359,162 @@ class LTspice:
                 self.add_node(line[1], line[2])
                 self.add_node(line[3], line[4])
 
+    def make_nodes_with_net_extraction(self):
+        """
+        Produce node dictionary using net extraction from wire connectivity.
+
+        This method uses graph analysis to identify electrical nets, then assigns
+        the same node number to all points in the same net. This is essential for
+        generating netlists without explicit wires.
+        """
+        self.nodes = {}
+        if self.parsed is None:
+            return
+
+        # First, extract nets from wire connectivity
+        net_mapping = self.extract_nets()
+
+        # Assign nodes based on net extraction
+        for node_key, net_num in net_mapping.items():
+            self.nodes[node_key] = net_num
+
+        # Update ground count
+        ground_count = sum(1 for v in self.nodes.values() if v == 0)
+        self.single_ground = ground_count <= 1
+
+    def match_opamp_nodes(self, x, y, direction):
+        """Match op-amp pins to circuit nodes.
+
+        Args:
+            x: X coordinate of op-amp origin
+            y: Y coordinate of op-amp origin
+            direction: Orientation ('down', 'left', 'up', 'right')
+
+        Returns:
+            Dict mapping pin names to node numbers/names
+        """
+        # Pin positions in default orientation (down/R0)
+        # These match the offsets in component_offsets for Opamps/UniversalOpamp2
+        pin_positions = {
+            "in_minus": (-32, -16),  # Inverting input
+            "in_plus": (-32, 16),  # Non-inverting input
+            "out": (32, 0),  # Output
+            "vcc": (0, -32),  # V+ power
+            "vee": (0, 32),  # V- power
+        }
+
+        nodes = {}
+        for pin_name, (px, py) in pin_positions.items():
+            # Rotate pin position based on component direction
+            rx, ry = rotate_point(px, py, direction)
+
+            # Get node at this location
+            key = node_key(x + rx, y + ry)
+            nodes[pin_name] = self.nodes.get(key, "?")
+
+        return nodes
+
+    def match_simple_opamp_nodes(self, x, y, direction):
+        """Match simple 3-pin op-amp to circuit nodes.
+
+        The simple opamp symbol has only 3 pins: in+, in-, and out.
+        No explicit power pins.
+
+        Args:
+            x: X coordinate of op-amp origin
+            y: Y coordinate of op-amp origin
+            direction: Orientation ('down', 'left', 'up', 'right')
+
+        Returns:
+            Dict mapping pin names to node numbers/names
+        """
+        # Pin positions for simple 3-pin op-amp in default orientation (down/R0)
+        # Based on actual LTspice opamp symbol measurements
+        pin_positions = {
+            "in_plus": (-32, 48),  # Non-inverting input (top left)
+            "in_minus": (-32, 80),  # Inverting input (bottom left)
+            "out": (32, 64),  # Output (right)
+        }
+
+        nodes = {}
+        for pin_name, (px, py) in pin_positions.items():
+            # Rotate pin position based on component direction
+            rx, ry = rotate_point(px, py, direction)
+
+            # Get node at this location
+            key = node_key(x + rx, y + ry)
+            nodes[pin_name] = self.nodes.get(key, "?")
+
+        return nodes
+
+    def extract_nets(self):
+        """Extract electrical nets from wire connectivity using graph analysis.
+
+        This assigns the same node number to all electrically connected points,
+        which is essential for generating a correct netlist without explicit wires.
+
+        Returns:
+            dict: Mapping from node position keys to net numbers
+        """
+        import networkx as nx
+
+        # Build connectivity graph from wires
+        wire_graph = nx.Graph()
+
+        # Add all wire connections
+        for line in self.parsed:
+            if line[0] == "WIRE":
+                # Get wire endpoints
+                x1, y1 = int(line[1]), int(line[2])
+                x2, y2 = int(line[3]), int(line[4])
+
+                # Create node keys
+                n1_key = node_key(x1, y1)
+                n2_key = node_key(x2, y2)
+
+                # Add edge connecting the endpoints
+                wire_graph.add_edge(n1_key, n2_key)
+
+        # Find connected components (each is one electrical net)
+        nets = list(nx.connected_components(wire_graph))
+
+        # Assign net numbers
+        net_mapping = {}
+        next_net_num = 1
+
+        for net_nodes in nets:
+            # Reserve net 0 for ground
+            # Check if any node in this net is already marked as ground
+            is_ground_net = False
+            for nkey in net_nodes:
+                # If nodes dict already exists and has ground marked
+                if self.nodes and self.nodes.get(nkey) in (0, "0", "GND", "gnd"):
+                    is_ground_net = True
+                    break
+                # Check for ground flag names
+                for flag_line in self.parsed:
+                    if flag_line[0] == "FLAG":
+                        fx, fy = int(flag_line[1]), int(flag_line[2])
+                        flag_key = node_key(fx, fy)
+                        if flag_key == nkey and flag_line[3] in ("0", "GND", "gnd"):
+                            is_ground_net = True
+                            break
+                if is_ground_net:
+                    break
+
+            # Assign net number
+            if is_ground_net:
+                net_num = 0
+            else:
+                net_num = next_net_num
+                next_net_num += 1
+
+            # Map all nodes in this net to the same number
+            for nkey in net_nodes:
+                net_mapping[nkey] = net_num
+
+        return net_mapping
+
     def wire_to_netlist(self, line):
         """Return netlist string for one wire in parsed data."""
         if line[0] != "WIRE":
@@ -354,7 +534,22 @@ class LTspice:
             direction = "right"
 
         self.graph.add_edge(n1, n2)
-        self.netlist += "W %s %s; %s\n" % (n1, n2, direction)
+
+        # Include direction hints based on mode
+        # In non-minimal mode, always include directions (helpful for debugging)
+        # In minimal mode, never include directions (let lcapy auto-layout)
+        in_minimal_mode = getattr(self, "_minimal", False)
+        include_directions = getattr(self, "_include_wire_directions", False)
+
+        if not in_minimal_mode and not include_directions:
+            # Default: include directions in non-minimal mode
+            self.netlist += "W %s %s; %s\n" % (n1, n2, direction)
+        elif include_directions:
+            # Explicitly requested directions
+            self.netlist += "W %s %s; %s\n" % (n1, n2, direction)
+        else:
+            # Minimal mode or explicitly no directions
+            self.netlist += "W %s %s\n" % (n1, n2)
 
     def symbol_to_netlist(self, line):
         """Return netlist string for symbol in parsed data."""
@@ -381,6 +576,50 @@ class LTspice:
         name = ""
         value = ""
         _value2 = None
+
+        # Handle op-amp components early (both types)
+        if kind in ("Opamps/UniversalOpamp2", "opamp"):
+            # Get the component name first
+            for sub_line in line:
+                row = list(sub_line)
+                if row[0] == "SYMATTR" and row[1] == "InstName":
+                    name = row[3]
+                    break
+
+            # Lcapy requires op-amps to use 'E' prefix, not 'U'
+            # Convert U1 -> E1, U2 -> E2, etc.
+            if name.startswith("U"):
+                name = "E" + name[1:]
+
+            # Match op-amp pins to nodes (different methods for different types)
+            if kind == "Opamps/UniversalOpamp2":
+                # 5-pin op-amp with explicit power pins
+                nodes = self.match_opamp_nodes(x, y, direction)
+                ref_node = nodes["vee"] if nodes["vee"] != 0 else 0
+            else:
+                # Simple 3-pin op-amp (kind == "opamp")
+                nodes = self.match_simple_opamp_nodes(x, y, direction)
+                ref_node = 0  # Reference to ground for simple op-amp
+
+            # Generate netlist line in lcapy format
+            # Lcapy format: Ename Nout Nref opamp Ninp Ninm [Ad] [Ac]
+            # where Nref is the reference node (usually ground or vee)
+            self.netlist += f"{name} {nodes['out']} {ref_node} opamp "
+            self.netlist += f"{nodes['in_plus']} {nodes['in_minus']}\n"
+
+            # Add nodes to graph
+            for node in nodes.values():
+                if node != "?":
+                    self.graph.add_node(node)
+
+            # Add edges connecting all op-amp pins
+            node_list = [n for n in nodes.values() if n != "?"]
+            for i, n1 in enumerate(node_list):
+                for n2 in node_list[i + 1 :]:
+                    self.graph.add_edge(n1, n2)
+
+            return  # Done with this op-amp, don't continue to two-terminal logic
+
         for sub_line in line:
             row = list(sub_line)
 
@@ -423,13 +662,271 @@ class LTspice:
         if kind == "polcap":
             direction += ", kind=polar, invert"
 
-        self.graph.add_edge(node1, node2)
-        self.netlist += "%s %s %s %s; %s\n" % (name, node1, node2, value, direction)
+        # Check if we need to reorient this RLC component
+        should_swap_nodes = False
+        if getattr(self, "_do_reorient_rlc", False):
+            # Check if this is an R, L, or C component
+            is_rlc = name.startswith("R") or name.startswith("L") or name.startswith("C")
+            if is_rlc:
+                # Check if direction is left or up (needs reorienting)
+                if direction in ("left", "up"):
+                    should_swap_nodes = True
+                    # Update direction for non-minimal mode
+                    if direction == "left":
+                        direction = "right"
+                    elif direction == "up":
+                        direction = "down"
 
-    def make_netlist(self):
-        """Process parsed LTspice data and create a simple netlist."""
+        # Swap nodes if needed
+        if should_swap_nodes:
+            node1, node2 = node2, node1
+
+        self.graph.add_edge(node1, node2)
+
+        # In minimal mode, omit all direction hints
+        if getattr(self, "_minimal", False):
+            self.netlist += "%s %s %s %s\n" % (name, node1, node2, value)
+        else:
+            self.netlist += "%s %s %s %s; %s\n" % (name, node1, node2, value, direction)
+
+    def _reorient_rlc(self):
+        """
+        Reorient resistors, capacitors, and inductors to only go right or down.
+
+        This helps lcapy's layout algorithm by ensuring all passive components
+        have consistent orientation. Components going left become right (with swapped nodes),
+        and components going up become down (with swapped nodes).
+
+        Modifies self.netlist in place.
+        """
+        if not self.netlist:
+            return
+
+        # Parse the netlist into lines
+        lines = self.netlist.strip().split("\n")
+        reoriented_lines = []
+
+        for line in lines:
+            if not line.strip():
+                continue
+
+            # Check if this is an R, L, or C component
+            parts = line.split()
+            if len(parts) < 3:
+                reoriented_lines.append(line)
+                continue
+
+            component_name = parts[0]
+            is_rlc = (
+                component_name.startswith("W")
+                or component_name.startswith("R")
+                or component_name.startswith("L")
+                or component_name.startswith("C")
+            )
+
+            if not is_rlc:
+                reoriented_lines.append(line)
+                continue
+
+            # Parse the line: "R1 node1 node2 value; direction"
+            if ";" in line:
+                main_part, direction_part = line.split(";", 1)
+                direction = direction_part.strip()
+            else:
+                # No direction specified
+                reoriented_lines.append(line)
+                continue
+
+            main_parts = main_part.split()
+            if len(main_parts) < 4:
+                reoriented_lines.append(line)
+                continue
+
+            name = main_parts[0]
+            node1 = main_parts[1]
+            node2 = main_parts[2]
+            value = main_parts[3]
+
+            # Check if direction needs reorienting
+            needs_reorient = False
+            new_direction = direction
+
+            if "left" in direction.lower():
+                needs_reorient = True
+                new_direction = direction.lower().replace("left", "right")
+            elif "up" in direction.lower():
+                needs_reorient = True
+                new_direction = direction.lower().replace("up", "down")
+
+            if needs_reorient:
+                # Swap nodes
+                node1, node2 = node2, node1
+                reoriented_line = f"{name} {node1} {node2} {value}; {new_direction}"
+                reoriented_lines.append(reoriented_line)
+            else:
+                reoriented_lines.append(line)
+
+        # Reconstruct netlist
+        self.netlist = "\n".join(reoriented_lines) + "\n"
+
+    def _renumber_nodes_for_drawing(self):
+        """
+        Renumber nodes sequentially with 'x' marker system.
+
+        Algorithm:
+        1. Pass 1: Mark EACH ground occurrence as 0_1x, 0_2x, 0_3x, etc.
+        2. Pass 2: Mark non-ground nodes as 1x, 2x, 3x in order of appearance
+        3. Pass 3: If only one ground (one 0_x), change it to 0x
+        4. Pass 4: Remove all 'x' markers
+        """
+        if not self.netlist:
+            return
+
+        result = self.netlist
+
+        # PASS 1: Mark EACH ground occurrence uniquely
+        ground_counter = 0
+        lines = result.split("\n")
+        new_lines = []
+
+        for line in lines:
+            if not line.strip():
+                new_lines.append(line)
+                continue
+
+            parts = line.split()
+            if len(parts) < 3:
+                new_lines.append(line)
+                continue
+
+            # Check each node position and replace ground (0)
+            new_line = line
+            comp = parts[0]
+
+            if comp.startswith("E") and len(parts) >= 6:
+                # Op-amp: check positions 1, 2, 4, 5
+                positions = [1, 2, 4, 5]
+            else:
+                # Two-terminal: check positions 1, 2
+                positions = [1, 2]
+
+            # Replace each occurrence of ' 0' in the appropriate positions
+            # We need to be careful to replace the right instances
+            parts_modified = parts[:]
+            for pos in positions:
+                if pos < len(parts) and parts[pos].rstrip(";") == "0":
+                    ground_counter += 1
+                    if parts[pos].endswith(";"):
+                        parts_modified[pos] = f"0_{ground_counter}x;"
+                    else:
+                        parts_modified[pos] = f"0_{ground_counter}x"
+
+            # Reconstruct the line
+            if parts_modified != parts:
+                new_line = " ".join(parts_modified)
+
+            new_lines.append(new_line)
+
+        result = "\n".join(new_lines)
+
+        # PASS 2: Mark non-ground nodes in order of first appearance
+        next_node_num = 1
+
+        # Keep processing until no more unmarked nodes found
+        while True:
+            lines = result.split("\n")
+            found_unmarked = False
+
+            for line in lines:
+                if not line.strip():
+                    continue
+
+                parts = line.split()
+                if len(parts) < 3:
+                    continue
+
+                comp = parts[0]
+
+                # Get node positions
+                if comp.startswith("E") and len(parts) >= 6:
+                    node_positions = [1, 2, 4, 5]
+                else:
+                    node_positions = [1, 2]
+
+                # Process each node in this line
+                for pos in node_positions:
+                    if pos >= len(parts):
+                        continue
+
+                    node = parts[pos].rstrip(";")
+
+                    # Skip if already marked with 'x' or is ground (0_)
+                    if "x" in node or node.startswith("0_"):
+                        continue
+
+                    # Found an unmarked node!
+                    found_unmarked = True
+                    new_node = f"{next_node_num}x"
+
+                    # Replace ALL occurrences in the entire netlist
+                    result = result.replace(f" {node};", f" {new_node};")
+                    result = result.replace(f" {node} ", f" {new_node} ")
+                    result = result.replace(f" {node}\n", f" {new_node}\n")
+
+                    next_node_num += 1
+                    break  # Re-parse from the beginning with updated result
+
+                if found_unmarked:
+                    break  # Re-parse from the beginning
+
+            if not found_unmarked:
+                break  # No more unmarked nodes
+
+        # PASS 3: If only one ground, change 0_1x to 0x
+        if ground_counter == 1:
+            result = result.replace("0_1x", "0x")
+
+        # PASS 4: Remove all 'x' markers
+        result = result.replace("x", "")
+
+        self.netlist = result
+
+    def make_netlist(
+        self,
+        use_named_nodes=True,
+        include_wire_directions=True,
+        minimal=False,
+        use_net_extraction=False,
+        reorient_rlc=True,
+        renumber_nodes=True,
+    ):
+        """Process parsed LTspice data and create a simple netlist.
+
+        Args:
+            use_named_nodes: If True, keep named nodes like '+Vs' and '-Vs'.
+                           If False (default), convert to numbers for better
+                           drawing compatibility with lcapy.
+            include_wire_directions: If True, include direction hints (right, down).
+                                   If False (default), omit directions to let lcapy
+                                   auto-layout, which may work better for complex circuits.
+            minimal: If True, only include components (no wires or directions).
+                    This gives lcapy complete freedom to auto-layout.
+                    Recommended for drawing.
+            use_net_extraction: If True, use graph-based net extraction to renumber
+                              nodes so electrically connected points have the same number.
+                              This is ESSENTIAL for minimal mode to work correctly!
+            reorient_rlc: If True, reorient R, L, C components to only go right or down.
+                         Helps lcapy's layout by standardizing component orientations.
+            renumber_nodes: If True, renumber nodes for better drawing:
+                          - Ground nodes get unique IDs: 0_1, 0_2, 0_3, etc.
+                          - Other nodes numbered sequentially from 1
+                          Helps lcapy position ground connections independently.
+        """
         self.netlist = ""
         self.graph = nx.Graph()
+        self._include_wire_directions = include_wire_directions  # Store for wire_to_netlist
+        self._minimal = minimal  # Store for later use
+        self._do_reorient_rlc = reorient_rlc  # Store for symbol_to_netlist (flag)
 
         if self.parsed is None:
             self.parse()
@@ -437,16 +934,112 @@ class LTspice:
                 return
 
         if self.nodes is None:
-            self.make_nodes_from_wires()
-            self.sort_nodes()
+            if use_net_extraction:
+                # Use net extraction for proper node numbering
+                self.make_nodes_with_net_extraction()
+            else:
+                # Use original method
+                self.make_nodes_from_wires()
+                self.sort_nodes()
+
+        # Convert named nodes to numbers if requested
+        if not use_named_nodes:
+            self._convert_named_nodes_to_numbers()
 
         for line in self.parsed:
 
             if line[0] == "WIRE":
-                self.wire_to_netlist(line)
+                # Skip wires in minimal mode
+                if not minimal:
+                    self.wire_to_netlist(line)
 
             if isinstance(line[0], pp.ParseResults):
                 self.symbol_to_netlist(line)
+
+        # Reorient R, L, C components if requested
+        # Note: For minimal mode, we store the reorientation info and apply during symbol_to_netlist
+        if reorient_rlc:
+            if not minimal:
+                # With directions, can reorient after generation
+                self._reorient_rlc()
+            # For minimal mode, reorientation needs to happen during component generation
+            # so we just set a flag (handled in symbol_to_netlist)
+
+        # Renumber nodes for drawing if requested
+        if renumber_nodes:
+            self._renumber_nodes_for_drawing()
+            # Rebuild nodes dictionary from renumbered netlist
+            self._rebuild_nodes_from_netlist()
+
+    def _rebuild_nodes_from_netlist(self):
+        """Rebuild self.nodes dictionary from the current netlist.
+
+        This is needed after renumbering to sync the nodes dict with the netlist.
+        """
+        # Clear existing nodes
+        self.nodes = {}
+
+        # Extract all unique nodes from netlist
+        for line in self.netlist.split("\n"):
+            if not line.strip():
+                continue
+
+            parts = line.split()
+            if len(parts) < 3:
+                continue
+
+            comp = parts[0]
+
+            # Extract nodes based on component type
+            if comp.startswith("E") and len(parts) >= 6:
+                # Op-amp: positions 1, 2, 4, 5
+                nodes_in_line = [
+                    parts[1].rstrip(";"),
+                    parts[2].rstrip(";"),
+                    parts[4].rstrip(";"),
+                    parts[5].rstrip(";"),
+                ]
+            elif comp.startswith("W") or len(parts) >= 3:
+                # Wire or two-terminal: positions 1, 2
+                nodes_in_line = [parts[1].rstrip(";"), parts[2].rstrip(";")]
+            else:
+                continue
+
+            # Add nodes to dictionary
+            for node in nodes_in_line:
+                if node not in self.nodes:
+                    # Try to parse as integer, otherwise keep as string
+                    try:
+                        # Handle ground nodes like 0_1, 0_2
+                        if node.startswith("0_"):
+                            self.nodes[node] = node  # Keep as string
+                        else:
+                            self.nodes[node] = int(node)
+                    except ValueError:
+                        self.nodes[node] = node  # Keep as string if not a number
+
+    def _convert_named_nodes_to_numbers(self):
+        """Convert named nodes like '+Vs' and '-Vs' to numbered nodes.
+
+        This helps lcapy's drawing algorithm by avoiding named node clusters.
+        """
+        # Find the highest numbered node
+        max_node = 0
+        for value in self.nodes.values():
+            if isinstance(value, int) and value != 0:
+                max_node = max(max_node, value)
+
+        # Map named nodes to new numbers
+        node_mapping = {}
+        next_node = max_node + 1
+
+        for key, value in list(self.nodes.items()):
+            # Convert non-ground named nodes to numbers
+            if isinstance(value, str) and value not in ["0", "?"]:
+                if value not in node_mapping:
+                    node_mapping[value] = next_node
+                    next_node += 1
+                self.nodes[key] = node_mapping[value]
 
     def make_graph(self):
         """Plot the network graph of the circuit."""
