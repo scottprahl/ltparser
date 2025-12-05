@@ -38,7 +38,6 @@ ltparser
 
 |license| |test| |docs| |downloads|
 
-
 Simple parser for converting LTspice `.asc` files to netlists.  Only a
 few LTspice elements are currently supported.
 
