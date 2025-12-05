@@ -1,6 +1,6 @@
 """Simple parser for converting LTspice `.asc` files to netlists."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Scott Prahl"
 __email__ = "scott.prahl@oit.edu"
 __copyright__ = "2022-25, Scott Prahl"
