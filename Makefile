@@ -104,13 +104,14 @@ dist: $(VENV)/.ready
 	
 .PHONY: test
 test: $(VENV)/.ready
-#	-$(PYTEST) $(PYTEST_OPTS) tests/tests.py
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_components.py
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_config.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_integration.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_legacy.py
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_opamp.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_parser.py
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_transformations.py
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_utils.py
-	-$(PYTEST) $(PYTEST_OPTS) tests/test_integration.py
 
 .PHONY: note-test
 note-test: $(VENV)/.ready
@@ -140,9 +141,22 @@ rst-check: $(VENV)/.ready    ## Validate all RST files
 .PHONY: pylint-check
 pylint-check:
 	-@$(PYLINT) ltparser/__init__.py
-	-@$(PYLINT) ltparser/ltparser.py
-	-@$(PYLINT) tests/test_all_notebooks.py
-	-@$(PYLINT) tests/tests.py
+	-@$(PYLINT) ltparser/components_config.json
+	-@$(PYLINT) ltparser/components.py
+	-@$(PYLINT) ltparser/config.py
+	-@$(PYLINT) ltparser/netlist.py
+	-@$(PYLINT) ltparser/nodes.py
+	-@$(PYLINT) ltparser/parser.py
+	-@$(PYLINT) ltparser/transformations.py
+	-@$(PYLINT) ltparser/utils.py
+	-@$(PYLINT) tests/test_components.py
+	-@$(PYLINT) tests/test_config.py
+	-@$(PYLINT) tests/test_integration.py
+	-@$(PYLINT) tests/test_legacy.py
+	-@$(PYLINT) tests/test_opamp.py
+	-@$(PYLINT) tests/test_parser.py
+	-@$(PYLINT) tests/test_transformations.py
+	-@$(PYLINT) tests/test_utils.py
 
 .PHONY: ruff-check
 ruff-check: $(VENV)/.ready
