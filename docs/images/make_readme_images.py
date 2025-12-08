@@ -15,7 +15,7 @@ import ltparser
 
 examples_dir = "../../tests/examples/"
 
-asc_files = ["passive_filter_band_pass", "amm_test_6", "twin_t", "voltage_divider_6", "volt_test_6"]
+asc_files = ["passive_filter_band_pass", "amm_test_6", "twin_t", "voltage_divider_6", "volt_test_6", "inverting_opamp_simple"]
 
 
 def create_image(name):
