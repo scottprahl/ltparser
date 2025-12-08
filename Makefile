@@ -104,7 +104,13 @@ dist: $(VENV)/.ready
 	
 .PHONY: test
 test: $(VENV)/.ready
-	-$(PYTEST) $(PYTEST_OPTS) tests/tests.py
+#	-$(PYTEST) $(PYTEST_OPTS) tests/tests.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_components.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_config.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_opamp.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_transformations.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_utils.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_integration.py
 
 .PHONY: note-test
 note-test: $(VENV)/.ready
