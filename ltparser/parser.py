@@ -11,7 +11,6 @@ import lcapy
 
 from .nodes import NodeManager
 from .netlist import NetlistGenerator
-from .components import ComponentMatcher
 
 
 # Define pyparsing grammar for LTspice format

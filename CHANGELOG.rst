@@ -7,6 +7,7 @@ Changelog
 * seems to be at least as good a before refactoring
 * support for voltmeter and ammeters
 * many more examples
+* many more tests
 
 0.2.0
 ------

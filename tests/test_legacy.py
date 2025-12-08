@@ -4,7 +4,6 @@ Legacy tests from original ltparser.py, updated for refactored code.
 These tests verify value parsing and bulk file processing across many example circuits.
 """
 
-import os
 from pathlib import Path
 
 try:

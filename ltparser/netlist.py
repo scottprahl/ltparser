@@ -7,7 +7,7 @@ Handles conversion of parsed LTspice data to circuit netlists.
 import re
 import pyparsing as pp
 import networkx as nx
-from .components import ComponentMatcher, node_key, rotate_point
+from .components import ComponentMatcher, node_key
 from .transformations import NetlistTransformer
 from .config import COMPONENTS_CONFIG
 
