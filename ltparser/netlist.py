@@ -15,17 +15,17 @@ from .config import COMPONENTS_CONFIG
 def apply_netlist_prefix(inst_name, kind):
     """
     Apply netlist prefix substitution based on component configuration.
-    
+
     For components like op-amps where lcapy requires a specific prefix (e.g., 'E'),
     this replaces the LTspice InstName prefix with the configured netlist_prefix.
-    
+
     Args:
         inst_name: Original instance name from LTspice (e.g., "U1")
         kind: Component type/symbol (e.g., "opamp", "Opamps/UniversalOpamp2")
-    
+
     Returns:
         str: Modified instance name with correct prefix (e.g., "E1")
-    
+
     Examples:
         apply_netlist_prefix("U1", "opamp") -> "E1"
         apply_netlist_prefix("U2", "Opamps/UniversalOpamp2") -> "E2"
@@ -33,26 +33,26 @@ def apply_netlist_prefix(inst_name, kind):
     """
     # Look up the component in config
     components_config = COMPONENTS_CONFIG.get("components", {})
-    
+
     # Special case: simple "opamp" is stored as "Opamps/opamp" in config
     lookup_kind = kind
     if kind == "opamp":
         lookup_kind = "Opamps/opamp"
-    
+
     # Check all component categories
     for category in ["two_terminal", "multi_terminal", "three_terminal"]:
         category_dict = components_config.get(category, {})
         if lookup_kind in category_dict:
             config = category_dict[lookup_kind]
             netlist_prefix = config.get("netlist_prefix")
-            
+
             if netlist_prefix:
                 # Extract the numeric suffix from inst_name (e.g., "U1" -> "1")
-                match = re.match(r'^[A-Z]+(\d+)$', inst_name)
+                match = re.match(r"^[A-Z]+(\d+)$", inst_name)
                 if match:
                     number = match.group(1)
                     return f"{netlist_prefix}{number}"
-    
+
     # No prefix substitution needed, return original name
     return inst_name
 
@@ -199,21 +199,21 @@ class NetlistGenerator:
         self._include_wire_directions = True
         self._minimal = False
         self._do_reorient_rlc = False
-        
+
         # Component counters for independent numbering
         self.component_counters = {
-            'AM': 0,  # Ammeter
-            'VM': 0,  # Voltmeter
-            'BAT': 0, # Battery
+            "AM": 0,  # Ammeter
+            "VM": 0,  # Voltmeter
+            "BAT": 0,  # Battery
         }
-    
+
     def get_next_component_number(self, prefix):
         """
         Get the next number for a component type that needs independent numbering.
-        
+
         Args:
             prefix: Component prefix (e.g., 'AM', 'VM', 'BAT')
-            
+
         Returns:
             int: Next number for this component type
         """
@@ -310,10 +310,9 @@ class NetlistGenerator:
         # Clean up value - remove unit suffixes like 'V', 'A' for sources
         # but keep 'k', 'M', 'meg' for multipliers
         kind_lower = kind.lower()
-        is_voltage_source = (kind_lower.startswith("voltage") or 
-                            "battery" in kind_lower)
+        is_voltage_source = kind_lower.startswith("voltage") or "battery" in kind_lower
         is_current_source = kind_lower.startswith("current")
-        
+
         if value and (is_voltage_source or is_current_source):
             # Remove trailing V or A (voltage/current units)
             if value.endswith("V") or value.endswith("v"):
@@ -334,7 +333,7 @@ class NetlistGenerator:
 
             # Apply netlist prefix (U1 -> E1 for lcapy compatibility)
             inst_name = apply_netlist_prefix(inst_name, kind)
-            
+
             self.netlist += f"{inst_name} {out} {vee} opamp {in_plus} {in_minus}\n"
 
         elif kind == "opamp":
@@ -345,7 +344,7 @@ class NetlistGenerator:
 
             # Apply netlist prefix (U1 -> E1 for lcapy compatibility)
             inst_name = apply_netlist_prefix(inst_name, kind)
-            
+
             self.netlist += f"{inst_name} {out} 0 opamp {in_plus} {in_minus}\n"
 
         elif kind.lower().startswith("res"):
@@ -492,7 +491,7 @@ class NetlistGenerator:
             n2 = matched.get("pin1", matched.get("n2", "?"))
 
             # Use independent numbering (AM1, AM2, ...)
-            num = self.get_next_component_number('AM')
+            num = self.get_next_component_number("AM")
             inst_name = f"AM{num}"
 
             if self._minimal:
@@ -506,7 +505,7 @@ class NetlistGenerator:
             n2 = matched.get("pin1", matched.get("n2", "?"))
 
             # Use independent numbering (VM1, VM2, ...)
-            num = self.get_next_component_number('VM')
+            num = self.get_next_component_number("VM")
             inst_name = f"VM{num}"
 
             if self._minimal:

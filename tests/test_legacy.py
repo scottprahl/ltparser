@@ -89,10 +89,10 @@ class TestBulkFileProcessing:
     def test_file_opening(self, filename):
         """Validate that all example files can be opened."""
         filepath = EXAMPLES_DIR / filename
-        
+
         if not filepath.exists():
             pytest.skip(f"Example file not found: {filename}")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         assert lt.contents is not None, f"Failed to read {filename}"
@@ -101,10 +101,10 @@ class TestBulkFileProcessing:
     def test_file_parsing(self, filename):
         """Validate that all example files can be parsed."""
         filepath = EXAMPLES_DIR / filename
-        
+
         if not filepath.exists():
             pytest.skip(f"Example file not found: {filename}")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
@@ -115,18 +115,18 @@ class TestBulkFileProcessing:
     def test_netlist_generation(self, filename):
         """Validate that all example files can generate netlists."""
         filepath = EXAMPLES_DIR / filename
-        
+
         if not filepath.exists():
             pytest.skip(f"Example file not found: {filename}")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         assert netlist is not None, f"Netlist generation failed for {filename}"
         assert len(netlist) > 0, f"Generated netlist is empty for {filename}"
-        
+
         # Basic sanity checks
         assert "?" not in netlist, f"Netlist has unmatched nodes (?) in {filename}"
 
@@ -134,15 +134,15 @@ class TestBulkFileProcessing:
     def test_circuit_creation(self, filename):
         """Validate that all example files can create lcapy Circuit objects."""
         filepath = EXAMPLES_DIR / filename
-        
+
         if not filepath.exists():
             pytest.skip(f"Example file not found: {filename}")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         lt.make_netlist()
-        
+
         try:
             circuit = lt.circuit()
             # If lcapy is installed, verify circuit was created
@@ -159,11 +159,11 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "simple1.asc"
         if not filepath.exists():
             pytest.skip("simple1.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
-        
+
         assert lt.parsed is not None
         assert len(lt.parsed) > 0
 
@@ -172,12 +172,12 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "orientation-test.asc"
         if not filepath.exists():
             pytest.skip("orientation-test.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         # Should have components in different orientations
         assert "; right" in netlist or "; left" in netlist or "; up" in netlist or "; down" in netlist
 
@@ -186,12 +186,12 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "orientation-test2.asc"
         if not filepath.exists():
             pytest.skip("orientation-test2.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         assert netlist is not None
 
     def test_low_pass_filter(self):
@@ -199,12 +199,12 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "passive-filter-low-pass.asc"
         if not filepath.exists():
             pytest.skip("passive-filter-low-pass.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         # Should have R, C, and voltage source
         assert "R" in netlist
         assert "C" in netlist
@@ -215,12 +215,12 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "passive-filter-low-with-load.asc"
         if not filepath.exists():
             pytest.skip("passive-filter-low-with-load.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         # Should have multiple resistors
         resistor_count = netlist.count("R")
         assert resistor_count >= 2, "Should have at least 2 resistors (source + load)"
@@ -230,12 +230,12 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "passive-filter-high-pass.asc"
         if not filepath.exists():
             pytest.skip("passive-filter-high-pass.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         assert "R" in netlist
         assert "C" in netlist
 
@@ -244,12 +244,12 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "passive-filter-band-pass.asc"
         if not filepath.exists():
             pytest.skip("passive-filter-band-pass.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         assert netlist is not None
 
     def test_band_block_filter(self):
@@ -257,12 +257,12 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "passive-filter-band-block.asc"
         if not filepath.exists():
             pytest.skip("passive-filter-band-block.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         assert netlist is not None
 
     def test_series_resonant(self):
@@ -270,12 +270,12 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "resonant-series.asc"
         if not filepath.exists():
             pytest.skip("resonant-series.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         # Should have R, L, C
         assert "R" in netlist
         assert "L" in netlist
@@ -286,12 +286,12 @@ class TestSpecificCircuits:
         filepath = EXAMPLES_DIR / "passive-filter-low-pass-omega.asc"
         if not filepath.exists():
             pytest.skip("passive-filter-low-pass-omega.asc not found")
-        
+
         lt = LTspice()
         lt.read(str(filepath))
         lt.parse()
         netlist = lt.make_netlist()
-        
+
         # Should have components
         assert len(netlist) > 0
 

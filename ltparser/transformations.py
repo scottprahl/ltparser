@@ -247,7 +247,7 @@ class NetlistTransformer:
 
         while True:
             found_unmarked = False
-            lines = result.split('\n')
+            lines = result.split("\n")
 
             # 1) Find the next unmarked (non-x) node in node positions
             for line in lines:
@@ -261,9 +261,9 @@ class NetlistTransformer:
                 comp = parts[0]
 
                 # Determine which positions are *node* fields
-                if comp.startswith('E') and len(parts) >= 6:
+                if comp.startswith("E") and len(parts) >= 6:
                     node_positions = [1, 2, 4, 5]
-                elif (comp.startswith('V') or comp.startswith('I')) and len(parts) >= 4:
+                elif (comp.startswith("V") or comp.startswith("I")) and len(parts) >= 4:
                     # For sources, parts[3] is value; 1 and 2 are nodes
                     node_positions = [1, 2]
                 else:
@@ -273,10 +273,10 @@ class NetlistTransformer:
                     if pos >= len(parts):
                         continue
 
-                    node = parts[pos].rstrip(';')
+                    node = parts[pos].rstrip(";")
 
                     # Skip if already marked with 'x' or is ground (0 / 0_)
-                    if 'x' in node or (skip_grounds and (node == '0' or node.startswith('0_'))):
+                    if "x" in node or (skip_grounds and (node == "0" or node.startswith("0_"))):
                         continue
 
                     # Found an unmarked node!
@@ -286,7 +286,7 @@ class NetlistTransformer:
                     # 2) Replace this node throughout the netlist, but only
                     #    in *node* positions (never in values)
                     new_lines = []
-                    for check_line in result.split('\n'):
+                    for check_line in result.split("\n"):
                         if not check_line.strip():
                             new_lines.append(check_line)
                             continue
@@ -299,9 +299,11 @@ class NetlistTransformer:
                         check_comp = check_parts[0]
 
                         # Replaceable positions for this component type
-                        if check_comp.startswith('E') and len(check_parts) >= 6:
+                        if check_comp.startswith("E") and len(check_parts) >= 6:
                             replaceable_pos = [1, 2, 4, 5]
-                        elif (check_comp.startswith('V') or check_comp.startswith('I')) and len(check_parts) >= 4:
+                        elif (check_comp.startswith("V") or check_comp.startswith("I")) and len(
+                            check_parts
+                        ) >= 4:
                             replaceable_pos = [1, 2]  # do NOT touch value at index 3
                         else:
                             replaceable_pos = [1, 2]
@@ -310,19 +312,19 @@ class NetlistTransformer:
                         new_parts = check_parts[:]
                         for rpos in replaceable_pos:
                             if rpos < len(new_parts):
-                                part_clean = new_parts[rpos].rstrip(';')
-                                has_semi = new_parts[rpos].endswith(';')
+                                part_clean = new_parts[rpos].rstrip(";")
+                                has_semi = new_parts[rpos].endswith(";")
 
                                 if part_clean == node:
-                                    new_parts[rpos] = new_node + (';' if has_semi else '')
+                                    new_parts[rpos] = new_node + (";" if has_semi else "")
                                     modified = True
 
                         if modified:
-                            new_lines.append(' '.join(new_parts))
+                            new_lines.append(" ".join(new_parts))
                         else:
                             new_lines.append(check_line)
 
-                    result = '\n'.join(new_lines)
+                    result = "\n".join(new_lines)
 
                     # 3) Update nodes_dict: any coordinate whose value was 'node'
                     #    becomes 'new_node'.
@@ -382,9 +384,7 @@ class NetlistTransformer:
             return "", nodes_dict
 
         # Step 1: Renumber grounds in the netlist only.
-        result, single_ground = NetlistTransformer.renumber_grounds(
-            netlist, parsed_data
-        )
+        result, single_ground = NetlistTransformer.renumber_grounds(netlist, parsed_data)
 
         # Step 2: Renumber non-ground nodes, updating nodes_dict values as we go
         result = NetlistTransformer.renumber_nodes(

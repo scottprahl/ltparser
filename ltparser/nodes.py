@@ -50,7 +50,7 @@ class NodeManager:
 
     def make_nodes_from_wires(self, parsed_data):
         """Extract nodes from wire definitions.
-    
+
         - Creates a node for each unique wire endpoint coordinate.
         - Treats ground flags specially:
             * If there is only one physical ground location, all grounds are node 0.
@@ -60,14 +60,14 @@ class NodeManager:
         """
         # Reset node map
         self.nodes = {}
-    
+
         # ---------- 1) Collect all ground FLAG locations ----------
         ground_locations = []
-    
+
         for line in parsed_data:
             if not line:
                 continue
-    
+
             # Nested FLAGs attached to a WIRE line: scan ALL items after coords
             if line[0] == "WIRE" and len(line) > 5:
                 for item in line[5:]:
@@ -75,32 +75,32 @@ class NodeManager:
                         x, y, name = item[1:4]
                         if name == "0" or name == 0:
                             ground_locations.append((x, y))
-    
+
             # Standalone FLAG line (not attached to symbol or wire)
             if isinstance(line[0], list) and line[0][0] == "FLAG":
                 x, y, name = line[0][1:4]
                 if name == "0" or name == 0:
                     ground_locations.append((x, y))
-    
+
         # Decide if all grounds are at the same location
         unique_grounds = list(set(ground_locations))
         single_ground = len(unique_grounds) <= 1
-    
+
         # Map from (x, y) → "0_1", "0_2", ...
         ground_map = {}
         ground_counter = 1
-    
+
         # ---------- 2) Process all FLAGs to create nodes ----------
         for line in parsed_data:
             if not line:
                 continue
-    
+
             # Nested FLAGs on WIRE lines – scan ALL items after coords
             if line[0] == "WIRE" and len(line) > 5:
                 for item in line[5:]:
                     if isinstance(item, list) and item and item[0] == "FLAG":
                         x, y, name = item[1:4]
-    
+
                         if name == "0" or name == 0:
                             # Ground node
                             if single_ground:
@@ -116,11 +116,11 @@ class NodeManager:
                         else:
                             # Non-ground label: ensure node exists, but do not use text as node name
                             self.add_node(x, y)
-    
+
             # Standalone FLAG (not attached to SYMBOL/WIRE group)
             if isinstance(line[0], list) and line[0][0] == "FLAG":
                 x, y, name = line[0][1:4]
-    
+
                 if name == "0" or name == 0:
                     if single_ground:
                         self.add_node(x, y, name=0)
@@ -133,15 +133,15 @@ class NodeManager:
                 else:
                     # Non-ground label: ensure node exists, but do not use text as node name
                     self.add_node(x, y)
-    
+
         # ---------- 3) Add nodes for all wire endpoints ----------
         for line in parsed_data:
             if not line or line[0] != "WIRE":
                 continue
-    
+
             # Wire format: WIRE x1 y1 x2 y2 ...
             x1, y1, x2, y2 = line[1:5]
-    
+
             # Add nodes at endpoints (reuses any existing ground node or numbered node)
             self.add_node(x1, y1)
             self.add_node(x2, y2)

@@ -12,6 +12,9 @@ Changelog
 ------
 * can renumber netlist nodes
 * simple op-amp circuit works
+* no more setup.cfg or setup.py
+* blacked everything
+* 
 
 v0.1.0
 ------

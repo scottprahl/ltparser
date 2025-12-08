@@ -1,6 +1,7 @@
 """
 Tests for op-amp functionality in ltparser
 """
+
 from pathlib import Path
 
 from ltparser import LTspice
@@ -128,6 +129,7 @@ def test_opamp_missing_nodes():
     assert result["vcc"] == "?"
     assert result["vee"] == "?"
 
+
 def test_inverting_opamp_simple_netlist():
     """Ensure inverting-opamp-simple.asc produces the expected netlist."""
     examples_dir = Path(__file__).parent / "examples"
@@ -160,4 +162,3 @@ E1 11 0 opamp 9 14
 """
 
     assert lt.netlist == expected
-
