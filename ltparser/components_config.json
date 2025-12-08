@@ -1,0 +1,228 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LTspice Component Configuration",
+  "description": "Component definitions for LTspice to netlist conversion",
+  
+  "components": {
+    "two_terminal": {
+      "voltage": {
+        "description": "Voltage source",
+        "x_offset": 0,
+        "y_offset": 16,
+        "length": 96,
+        "netlist_prefix": "V",
+        "lcapy_type": "voltage",
+        "direction_modifiers": {
+          "current": ["invert"]
+        }
+      },
+      "Misc/battery": {
+        "description": "Battery (voltage source)",
+        "x_offset": 0,
+        "y_offset": 16,
+        "length": 96,
+        "netlist_prefix": "BAT",
+        "lcapy_type": "voltage",
+        "direction_modifiers": {
+          "current": ["invert"]
+        }
+      },
+      "res": {
+        "description": "Resistor",
+        "x_offset": 16,
+        "y_offset": 16,
+        "length": 96,
+        "netlist_prefix": "R",
+        "lcapy_type": "R"
+      },
+      "cap": {
+        "description": "Capacitor",
+        "x_offset": 16,
+        "y_offset": 0,
+        "length": 64,
+        "netlist_prefix": "C",
+        "lcapy_type": "C"
+      },
+      "polcap": {
+        "description": "Polarized capacitor",
+        "x_offset": 16,
+        "y_offset": 0,
+        "length": 64,
+        "netlist_prefix": "C",
+        "lcapy_type": "C",
+        "direction_modifiers": {
+          "default": ["kind=polar", "invert"]
+        }
+      },
+      "ind": {
+        "description": "Inductor",
+        "x_offset": 16,
+        "y_offset": 16,
+        "length": 96,
+        "netlist_prefix": "L",
+        "lcapy_type": "L"
+      },
+      "current": {
+        "description": "Current source",
+        "x_offset": 0,
+        "y_offset": 0,
+        "length": 80,
+        "netlist_prefix": "I",
+        "lcapy_type": "current",
+        "direction_modifiers": {
+          "default": ["invert"]
+        }
+      },
+      "ammeter": {
+        "description": "Ammeter (current meter)",
+        "x_offset": 0,
+        "y_offset": -48,
+        "length": 48,
+        "netlist_prefix": "AM",
+        "lcapy_type": "ammeter"
+      },
+      "voltmeter": {
+        "description": "Voltmeter (voltage meter)",
+        "x_offset": 0,
+        "y_offset": -48,
+        "length": 48,
+        "netlist_prefix": "VM",
+        "lcapy_type": "voltmeter"
+      }
+    },
+    
+    "multi_terminal": {
+      "Opamps/UniversalOpamp2": {
+        "description": "Universal operational amplifier",
+        "type": "opamp",
+        "netlist_prefix": "E",
+        "lcapy_type": "opamp",
+        "pins": [
+          {
+            "name": "in_minus",
+            "label": "IN-",
+            "x": -32,
+            "y": -16,
+            "description": "Inverting input"
+          },
+          {
+            "name": "in_plus",
+            "label": "IN+",
+            "x": -32,
+            "y": 16,
+            "description": "Non-inverting input"
+          },
+          {
+            "name": "out",
+            "label": "OUT",
+            "x": 32,
+            "y": 0,
+            "description": "Output"
+          },
+          {
+            "name": "vcc",
+            "label": "V+",
+            "x": 0,
+            "y": -32,
+            "description": "Positive power supply"
+          },
+          {
+            "name": "vee",
+            "label": "V-",
+            "x": 0,
+            "y": 32,
+            "description": "Negative power supply"
+          }
+        ],
+        "netlist_pin_order": ["in_plus", "in_minus", "out", "vcc", "vee"],
+        "netlist_format": "{name} {nodes} opamp"
+      },
+      
+      "Opamps/opamp": {
+        "description": "Simple operational amplifier (no power pins)",
+        "type": "opamp",
+        "netlist_prefix": "E",
+        "lcapy_type": "opamp",
+        "pins": [
+          {
+            "name": "in_minus",
+            "label": "IN-",
+            "x": -32,
+            "y": -16,
+            "description": "Inverting input"
+          },
+          {
+            "name": "in_plus",
+            "label": "IN+",
+            "x": -32,
+            "y": 16,
+            "description": "Non-inverting input"
+          },
+          {
+            "name": "out",
+            "label": "OUT",
+            "x": 32,
+            "y": 0,
+            "description": "Output"
+          }
+        ],
+        "netlist_pin_order": ["in_plus", "in_minus", "out"],
+        "netlist_format": "{name} {nodes} opamp"
+      }
+    },
+    
+    "three_terminal": {
+      "npn": {
+        "description": "NPN bipolar junction transistor",
+        "type": "transistor",
+        "netlist_prefix": "Q",
+        "lcapy_type": "Q",
+        "pins": [
+          {
+            "name": "collector",
+            "label": "C",
+            "x": 0,
+            "y": -32
+          },
+          {
+            "name": "base",
+            "label": "B",
+            "x": -32,
+            "y": 0
+          },
+          {
+            "name": "emitter",
+            "label": "E",
+            "x": 0,
+            "y": 32
+          }
+        ],
+        "netlist_pin_order": ["collector", "base", "emitter"],
+        "netlist_format": "{name} {nodes} {model}"
+      }
+    }
+  },
+  
+  "wire_properties": {
+    "default_width": 1,
+    "color": "black"
+  },
+  
+  "rotation_angles": {
+    "down": 0,
+    "left": 90,
+    "up": 180,
+    "right": 270
+  },
+  
+  "si_prefixes": {
+    "MEG": 1e6,
+    "K": 1e3,
+    "M": 1e-3,
+    "U": 1e-6,
+    "µ": 1e-6,
+    "N": 1e-9,
+    "P": 1e-12,
+    "F": 1e-15
+  }
+}

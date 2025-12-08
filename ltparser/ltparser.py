@@ -202,33 +202,36 @@ class LTspice:
         self.graph = None
 
     def read(self, filename):
-        """Read a file as contents."""
-        encodings = []
+        """
+        Read an LTspice .asc file, handling multiple possible encodings.
+
+        Tries UTF-8, UTF-16-LE, UTF-16-BE, then latin-1, and picks the first
+        decode that looks like a valid LTspice schematic (starts with 'Version').
+        """
+        self.filename = filename
+
+        # Read raw bytes so we can try multiple encodings
         with open(filename, "rb") as f:
-            byte1 = f.read(1)
-            byte2 = f.read(1)
+            raw = f.read()
 
-        if byte1 != b"V":
-            raise LTspiceFileError("This is not an LTspice file.")
+        # Encodings to try, in order of likelihood / preference
+        encodings_to_try = ["utf-8", "utf-16-le", "utf-16-be", "latin-1"]
 
-        if byte2 == b"e":
-            encodings = ["utf-8", "mac-roman", "windows-1250"]
-        elif byte2 == b"\x00":
-            encodings = ["utf-16-le"]
-        else:
-            raise LTspiceFileError("This is not an LTspice file.")
-
-        for e in encodings:
+        for enc in encodings_to_try:
             try:
-                with open(filename, "r", encoding=e) as f:
-                    x = f.read()
-                    self.contents = x.replace("µ", "u")
-                    break
-            except UnicodeError:
-                print("got unicode error with %s , trying different encoding" % e)
-            else:
-                print("opening the file with encoding:  %s " % e)
-                break
+                text = raw.decode(enc)
+            except UnicodeDecodeError:
+                continue
+
+            # Heuristic: LTspice .asc files start with something like "Version 4"
+            stripped = text.lstrip()
+            if stripped.startswith("Version") or "Version" in text:
+                self.contents = text
+                return
+
+        # Last-resort fallback: decode with latin-1 and replace errors
+        # (this should never fail and at least gives *some* text)
+        self.contents = raw.decode("latin-1", errors="replace")
 
     def parse(self):
         """Parse LTspice .asc file contents."""
