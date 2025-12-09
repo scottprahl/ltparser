@@ -5,12 +5,6 @@ These tests use actual .asc files to verify end-to-end functionality.
 """
 
 import os
-
-try:
-    import pytest
-except ImportError:
-    pytest = None
-
 import ltparser
 
 

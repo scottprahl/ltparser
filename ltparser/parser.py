@@ -53,6 +53,7 @@ class LTspice:
         self.parsed = None
         self.node_manager = NodeManager()
         self.component_matcher = None
+        self.netlist = None
 
     @property
     def nodes(self):
@@ -95,14 +96,14 @@ class LTspice:
 
         for enc in encodings_to_try:
             try:
-                text = raw.decode(enc)
+                asc_text = raw.decode(enc)
             except UnicodeDecodeError:
                 continue
 
             # Heuristic: LTspice .asc files start with something like "Version 4"
-            stripped = text.lstrip()
-            if stripped.startswith("Version") or "Version" in text:
-                self.contents = text
+            stripped = asc_text.lstrip()
+            if stripped.startswith("Version") or "Version" in asc_text:
+                self.contents = asc_text
                 return
 
         # Last-resort fallback: decode with latin-1 and replace errors

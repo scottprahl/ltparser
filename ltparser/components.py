@@ -128,8 +128,7 @@ class ComponentMatcher:
         if kind in ("Opamps/UniversalOpamp2", "opamp"):
             if kind == "Opamps/UniversalOpamp2":
                 return self.match_opamp_nodes(x, y, direction)
-            else:
-                return self.match_simple_opamp_nodes(x, y, direction)
+            return self.match_simple_opamp_nodes(x, y, direction)
 
         # Look for component in config
         # Check two_terminal components
@@ -165,18 +164,18 @@ class ComponentMatcher:
             # Calculate pin positions
             # Pin 1 at (x + x_off, y + y_off)
             # Pin 2 at (x + x_off, y + length) for down orientation
-            if direction == "down" or direction == "R0" or direction == "R":
+            if direction in ("down", "R0", "R"):
                 pin1_x, pin1_y = x + x_off, y + y_off
                 pin2_x, pin2_y = x + x_off, y + length
-            elif direction == "right" or direction == "R270":
+            elif direction in ("right", "R270"):
                 # Rotate 90° CW: (x,y) -> (y, -x)
                 pin1_x, pin1_y = x + y_off, y - x_off
                 pin2_x, pin2_y = x + length, y - x_off
-            elif direction == "up" or direction == "R180":
+            elif direction in ("up", "R180"):
                 # Rotate 180°: (x,y) -> (-x, -y)
                 pin1_x, pin1_y = x - x_off, y - y_off
                 pin2_x, pin2_y = x - x_off, y - length
-            elif direction == "left" or direction == "R90":
+            elif direction in ("left", "R90"):
                 # Rotate 90° CCW: (x,y) -> (-y, x)
                 pin1_x, pin1_y = x - y_off, y + x_off
                 pin2_x, pin2_y = x - length, y + x_off

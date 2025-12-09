@@ -156,7 +156,7 @@ class NetlistTransformer:
                     # Check for FLAG statements
                     if isinstance(line[0], list) and line[0][0] == "FLAG":
                         name = line[0][3] if len(line[0]) > 3 else None
-                        if name == 0 or name == "0":
+                        if name in (0 or "0"):
                             x, y = line[0][1], line[0][2]
                             ground_locations.add((x, y))
 
@@ -384,7 +384,7 @@ class NetlistTransformer:
             return "", nodes_dict
 
         # Step 1: Renumber grounds in the netlist only.
-        result, single_ground = NetlistTransformer.renumber_grounds(netlist, parsed_data)
+        result, _single_ground = NetlistTransformer.renumber_grounds(netlist, parsed_data)
 
         # Step 2: Renumber non-ground nodes, updating nodes_dict values as we go
         result = NetlistTransformer.renumber_nodes(

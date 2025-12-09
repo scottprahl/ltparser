@@ -75,13 +75,13 @@ class NodeManager:
                 for item in line[5:]:
                     if isinstance(item, list) and item and item[0] == "FLAG":
                         x, y, name = item[1:4]
-                        if name == "0" or name == 0:
+                        if name in ("0", 0):
                             ground_locations.append((x, y))
 
             # Standalone FLAG line (not attached to symbol or wire)
             if isinstance(line[0], list) and line[0][0] == "FLAG":
                 x, y, name = line[0][1:4]
-                if name == "0" or name == 0:
+                if name in ("0", 0):
                     ground_locations.append((x, y))
 
         # Decide if all grounds are at the same location
@@ -103,7 +103,7 @@ class NodeManager:
                     if isinstance(item, list) and item and item[0] == "FLAG":
                         x, y, name = item[1:4]
 
-                        if name == "0" or name == 0:
+                        if name in ("0", 0):
                             # Ground node
                             if single_ground:
                                 # All grounds share a single node 0
@@ -123,7 +123,7 @@ class NodeManager:
             if isinstance(line[0], list) and line[0][0] == "FLAG":
                 x, y, name = line[0][1:4]
 
-                if name == "0" or name == 0:
+                if name in ("0", 0):
                     if single_ground:
                         self.add_node(x, y, name=0)
                     else:
@@ -232,7 +232,7 @@ class NodeManager:
         net_map = self.extract_nets(parsed_data)
 
         # Update nodes dictionary with net numbers
-        for key in self.nodes.keys():
+        for key in self.nodes:
             if key in net_map:
                 self.nodes[key] = net_map[key]
 

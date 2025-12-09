@@ -81,15 +81,17 @@ markers = ["notebooks"]
 
 [tool.pylint.messages_control]
 disable = [
+    "consider-using-f-string",
+    "duplicate-code",
     "invalid-name",
     "line-too-long",
     "too-many-locals",
     "too-many-arguments",
-    "too-many-positional-arguments",
-    "consider-using-f-string",
-    "too-many-statements",
-    "duplicate-code",
     "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-nested-blocks",
+    "too-many-positional-arguments",
+    "too-many-statements",
     "C0114",
     "C0116",
     "R0912",

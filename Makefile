@@ -141,7 +141,6 @@ rst-check: $(VENV)/.ready    ## Validate all RST files
 .PHONY: pylint-check
 pylint-check:
 	-@$(PYLINT) ltparser/__init__.py
-	-@$(PYLINT) ltparser/components_config.json
 	-@$(PYLINT) ltparser/components.py
 	-@$(PYLINT) ltparser/config.py
 	-@$(PYLINT) ltparser/netlist.py

@@ -199,6 +199,7 @@ class NetlistGenerator:
         self._include_wire_directions = True
         self._minimal = False
         self._do_reorient_rlc = False
+        self._use_net_extraction = False
 
         # Component counters for independent numbering
         self.component_counters = {
@@ -422,7 +423,7 @@ class NetlistGenerator:
                 try:
                     _dc, amp, _freq = ltspice_sine_parser(source_value)
                     ac_value = amp
-                except Exception:
+                except ValueError:
                     pass
 
             # 3) Build final value
@@ -467,7 +468,7 @@ class NetlistGenerator:
                 try:
                     _dc, amp, _freq = ltspice_sine_parser(source_value)
                     ac_value = amp
-                except Exception:
+                except ValueError:
                     pass
 
             # 3) Build final value
@@ -550,6 +551,7 @@ class NetlistGenerator:
         self._include_wire_directions = include_wire_directions
         self._minimal = minimal
         self._do_reorient_rlc = reorient_rlc
+        self._use_net_extraction = use_net_extraction
 
         # Process parsed data
         for line in self.parsed:
