@@ -1,6 +1,4 @@
-"""
-Tests for ltparser.config module
-"""
+"""Tests for ltparser.config module."""
 
 from ltparser.config import load_components_config, COMPONENTS_CONFIG
 

@@ -1,6 +1,4 @@
-"""
-Tests for op-amp functionality in ltparser
-"""
+"""Tests for op-amp functionality in ltparser."""
 
 from pathlib import Path
 

@@ -1,6 +1,4 @@
-"""
-Tests for ltparser.utils module
-"""
+"""Tests for ltparser.utils module."""
 
 from ltparser.utils import clean_node_name, parse_direction, format_value, is_ground_node
 
@@ -44,15 +42,15 @@ def test_format_value():
 
 def test_is_ground_node_numeric():
     """Test ground node detection with numeric values."""
-    assert is_ground_node(0) == True
-    assert is_ground_node(1) == False
-    assert is_ground_node(5) == False
+    assert is_ground_node(0)
+    assert not is_ground_node(1)
+    assert not is_ground_node(5)
 
 
 def test_is_ground_node_string():
     """Test ground node detection with string values."""
-    assert is_ground_node("0") == True
-    assert is_ground_node("0_1") == True
-    assert is_ground_node("0_2") == True
-    assert is_ground_node("1") == False
-    assert is_ground_node("5") == False
+    assert is_ground_node("0")
+    assert is_ground_node("0_1")
+    assert is_ground_node("0_2")
+    assert not is_ground_node("1")
+    assert not is_ground_node("5")

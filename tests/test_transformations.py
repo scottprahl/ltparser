@@ -1,6 +1,4 @@
-"""
-Tests for ltparser.transformations module
-"""
+"""Tests for ltparser.transformations module."""
 
 from ltparser.transformations import NetlistTransformer
 

@@ -17,7 +17,8 @@ def rotate_point(x, y, direction):
     Rotate a point based on component direction.
 
     Args:
-        x, y: Point coordinates
+        x: horizontal coordinate of point
+        y: vertical coordinate of point
         direction: 'down' (R0), 'left' (R90), 'up' (R180), 'right' (R270)
 
     Returns:
@@ -49,8 +50,8 @@ class ComponentMatcher:
         Match 5-pin op-amp (UniversalOpamp2) pins to circuit nodes.
 
         Args:
-            x: X coordinate of op-amp origin
-            y: Y coordinate of op-amp origin
+            x: horizontal coordinate of op-amp origin
+            y: vertical coordinate of op-amp origin
             direction: Orientation ('down', 'left', 'up', 'right')
 
         Returns:
@@ -84,8 +85,8 @@ class ComponentMatcher:
         No explicit power pins.
 
         Args:
-            x: X coordinate of op-amp origin
-            y: Y coordinate of op-amp origin
+            x: horizontal coordinate of op-amp origin
+            y: vertical coordinate of op-amp origin
             direction: Orientation ('down', 'left', 'up', 'right')
 
         Returns:
@@ -114,6 +115,8 @@ class ComponentMatcher:
         Match a component at position (x, y) to its connected nodes.
 
         Args:
+            x: horizontal coordinate of component
+            y: vertical coordinate of component
             x, y: Component coordinates
             kind: Component type/symbol
             direction: Component orientation
@@ -132,8 +135,8 @@ class ComponentMatcher:
         # Check two_terminal components
         components_config = COMPONENTS_CONFIG.get("components", {})
         two_term = components_config.get("two_terminal", {})
-        multi_term = components_config.get("multi_terminal", {})
-        three_term = components_config.get("three_terminal", {})
+#        multi_term = components_config.get("multi_terminal", {})
+#        three_term = components_config.get("three_terminal", {})
 
         config = None
         if kind in two_term:

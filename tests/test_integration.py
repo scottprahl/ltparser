@@ -1,5 +1,5 @@
 """
-Integration tests for ltparser with real LTspice files
+Integration tests for ltparser with real LTspice files.
 
 These tests use actual .asc files to verify end-to-end functionality.
 """
@@ -183,7 +183,7 @@ R1 2 4 4700000.0; down
     assert "V1 1 3 3.3" in lt.netlist, "V1 should have value 3.3"
 
     # Check R1 value converted from Meg
-    r1_line = [l for l in lt.netlist.split("\n") if "R1" in l][0]
+    r1_line = [line for line in lt.netlist.split("\n") if "R1" in line][0]
     assert (
         "4700000" in r1_line or "4.7e+06" in r1_line
     ), f"R1 should have 4.7Meg converted to 4700000.0, got: {r1_line}"
@@ -205,8 +205,8 @@ def test_simple0_direction_conversion():
     lt.make_netlist()
 
     # Both components should have 'down' direction
-    v1_line = [l for l in lt.netlist.split("\n") if "V1" in l][0]
-    r1_line = [l for l in lt.netlist.split("\n") if "R1" in l][0]
+    v1_line = [line for line in lt.netlist.split("\n") if "V1" in line][0]
+    r1_line = [line for line in lt.netlist.split("\n") if "R1" in line][0]
 
     assert "; down" in v1_line, f"V1 should have 'down' direction, got: {v1_line}"
     assert "; down" in r1_line, f"R1 should have 'down' direction, got: {r1_line}"
@@ -239,8 +239,8 @@ def test_simple2_multiple_grounds():
     ), f"Should not have plain '0' ground (use 0_1, 0_2), found: {lines_with_plain_zero}"
 
     # Check V1 and R1 each connect to different grounds
-    v1_line = [l for l in lt.netlist.split("\n") if "V1" in l][0]
-    r1_line = [l for l in lt.netlist.split("\n") if "R1" in l][0]
+    v1_line = [line for line in lt.netlist.split("\n") if "V1" in line][0]
+    r1_line = [line for line in lt.netlist.split("\n") if "R1" in line][0]
 
     # One should have 0_1, the other 0_2
     assert ("0_1" in v1_line and "0_2" in r1_line) or (
@@ -264,6 +264,7 @@ W 3 6; down
 V1 5 0_1 5.0; down
 R1 6 0_2 1000.0; down
 """
+    assert lt.netlist == expected
 
 
 def test_simple2_conversion():
@@ -271,7 +272,7 @@ def test_simple2_conversion():
     lt = ltparser.LTspice()
     lt.read(os.path.join(EXAMPLES_DIR, "simple2.asc"))
     lt.parse()
-    lt.make_netlist(renumber_nodes=False)
+    lt.make_netlist()
 
     expected = """W 1 2; right
 W 1 3; down
@@ -279,6 +280,7 @@ W 2 4; down
 V1 3 0_1 5.0; down
 R1 4 0_2 1000.0; down
 """
+    assert lt.netlist == expected
 
 
 def test_resonant_series():

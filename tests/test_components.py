@@ -1,6 +1,4 @@
-"""
-Tests for ltparser.components module
-"""
+"""Tests for ltparser.components module."""
 
 from ltparser.components import node_key, rotate_point, ComponentMatcher
 

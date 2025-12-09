@@ -1,5 +1,5 @@
 """
-ltparser - LTspice circuit file parser
+ltparser - LTspice circuit file parser.
 
 A Python library for parsing LTspice .asc files and generating netlists
 compatible with lcapy for symbolic circuit analysis.

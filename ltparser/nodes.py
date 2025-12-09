@@ -21,7 +21,8 @@ class NodeManager:
         Add a node at coordinates (x, y).
 
         Args:
-            x, y: Node coordinates
+            x: horizontal coordinate of node
+            y: vertical coordinate of node
             name: Optional node name (if False, uses auto-numbering)
 
         Returns:
@@ -43,6 +44,7 @@ class NodeManager:
     def sort_nodes(self):
         """
         Sort nodes dictionary to have consistent ordering.
+
         Sorts by value (int nodes first, then string nodes).
         """
         sorted_items = sorted(self.nodes.items(), key=lambda item: (isinstance(item[1], str), item[1]))

@@ -58,7 +58,7 @@ def apply_netlist_prefix(inst_name, kind):
 
 
 def ltspice_sine_parser(s):
-    """Try and figure out offset, amplitude, and frequency from SINE(...)"""
+    """Determine offset, amplitude, and frequency from SINE string."""
     number = pp.Combine(
         pp.Optional(".") + pp.Word(pp.nums) + pp.Optional("." + pp.Optional(pp.Word(pp.nums)))
     )
@@ -371,7 +371,7 @@ class NetlistGenerator:
 
         elif kind.lower().startswith("cap") or kind.lower().startswith("ind"):
             # Capacitor or Inductor
-            prefix = "C" if kind.lower().startswith("cap") else "L"
+#            prefix = "C" if kind.lower().startswith("cap") else "L"
             n1 = matched.get("pin0", matched.get("n1", "?"))
             n2 = matched.get("pin1", matched.get("n2", "?"))
 
