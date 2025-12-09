@@ -3,6 +3,7 @@ include LICENSE.txt
 include README.rst
 include CHANGELOG.rst
 include CITATION.cff
+include ltparser/components_config.json
 
-include tests/tests.py
+include tests/*.py
 include tests/examples/*.asc
