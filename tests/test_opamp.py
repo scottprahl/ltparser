@@ -131,7 +131,7 @@ def test_opamp_missing_nodes():
 def test_inverting_opamp_simple_netlist():
     """Ensure inverting-opamp-simple.asc produces the expected netlist."""
     examples_dir = Path(__file__).parent / "examples"
-    asc_path = examples_dir / "inverting-opamp-simple.asc"
+    asc_path = examples_dir / "inverting_opamp_simple.asc"
 
     lt = LTspice()
     lt.read(str(asc_path))

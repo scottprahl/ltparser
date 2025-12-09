@@ -17,21 +17,21 @@ from ltparser.netlist import _parse_prefixed_value
 
 # List of example circuits to test
 LTSPICE_FILES = [
-    "orientation-test.asc",
-    "orientation-test2.asc",
-    "passive-crossover.asc",
-    "passive-filter-band-block.asc",
-    "passive-filter-band-pass.asc",
-    "passive-filter-high-pass.asc",
-    "passive-filter-low-pass-omega.asc",
-    "passive-filter-low-pass.asc",
-    "passive-filter-low-with-load.asc",
-    "resonant-series.asc",
+    "orientation_test.asc",
+    "orientation_test2.asc",
+    "passive_crossover.asc",
+    "passive_filter_band_block.asc",
+    "passive_filter_band_pass.asc",
+    "passive_filter_high_pass.asc",
+    "passive_filter_low_pass_omega.asc",
+    "passive_filter_low_pass.asc",
+    "passive_filter_low_with_load.asc",
+    "resonant_series.asc",
     "simple0.asc",
     "simple1.asc",
     "simple2.asc",
     "simple3.asc",
-    "twin-t.asc",
+    "twin_t.asc",
 ]
 
 # Get examples directory
@@ -170,7 +170,7 @@ class TestSpecificCircuits:
         """Circuit to ensure symbol orientations are correct."""
         filepath = EXAMPLES_DIR / "orientation-test.asc"
         if not filepath.exists():
-            pytest.skip("orientation-test.asc not found")
+            pytest.skip("orientation_test.asc not found")
 
         lt = LTspice()
         lt.read(str(filepath))
@@ -182,9 +182,9 @@ class TestSpecificCircuits:
 
     def test_orientation_test2(self):
         """Second circuit to ensure symbol orientations are correct."""
-        filepath = EXAMPLES_DIR / "orientation-test2.asc"
+        filepath = EXAMPLES_DIR / "orientation_test2.asc"
         if not filepath.exists():
-            pytest.skip("orientation-test2.asc not found")
+            pytest.skip("orientation_test2.asc not found")
 
         lt = LTspice()
         lt.read(str(filepath))
@@ -195,9 +195,9 @@ class TestSpecificCircuits:
 
     def test_low_pass_filter(self):
         """Passive low pass filter."""
-        filepath = EXAMPLES_DIR / "passive-filter-low-pass.asc"
+        filepath = EXAMPLES_DIR / "passive_filter_low_pass.asc"
         if not filepath.exists():
-            pytest.skip("passive-filter-low-pass.asc not found")
+            pytest.skip("passive_filter_low_pass.asc not found")
 
         lt = LTspice()
         lt.read(str(filepath))
@@ -211,9 +211,9 @@ class TestSpecificCircuits:
 
     def test_low_pass_filter_with_load(self):
         """Passive low pass filter with load resistor."""
-        filepath = EXAMPLES_DIR / "passive-filter-low-with-load.asc"
+        filepath = EXAMPLES_DIR / "passive_filter_low_with_load.asc"
         if not filepath.exists():
-            pytest.skip("passive-filter-low-with-load.asc not found")
+            pytest.skip("passive_filter_low_with_load.asc not found")
 
         lt = LTspice()
         lt.read(str(filepath))
@@ -226,9 +226,9 @@ class TestSpecificCircuits:
 
     def test_high_pass_filter(self):
         """Passive high pass filter."""
-        filepath = EXAMPLES_DIR / "passive-filter-high-pass.asc"
+        filepath = EXAMPLES_DIR / "passive_filter_high_pass.asc"
         if not filepath.exists():
-            pytest.skip("passive-filter-high-pass.asc not found")
+            pytest.skip("passive_filter_high_pass.asc not found")
 
         lt = LTspice()
         lt.read(str(filepath))
@@ -240,9 +240,9 @@ class TestSpecificCircuits:
 
     def test_band_pass_filter(self):
         """Passive band pass filter."""
-        filepath = EXAMPLES_DIR / "passive-filter-band-pass.asc"
+        filepath = EXAMPLES_DIR / "passive_filter_band_pass.asc"
         if not filepath.exists():
-            pytest.skip("passive-filter-band-pass.asc not found")
+            pytest.skip("passive_filter_band_pass.asc not found")
 
         lt = LTspice()
         lt.read(str(filepath))
@@ -253,9 +253,9 @@ class TestSpecificCircuits:
 
     def test_band_block_filter(self):
         """Passive band block (notch) filter."""
-        filepath = EXAMPLES_DIR / "passive-filter-band-block.asc"
+        filepath = EXAMPLES_DIR / "passive_filter_band_block.asc"
         if not filepath.exists():
-            pytest.skip("passive-filter-band-block.asc not found")
+            pytest.skip("passive_filter_band_block.asc not found")
 
         lt = LTspice()
         lt.read(str(filepath))
@@ -266,9 +266,9 @@ class TestSpecificCircuits:
 
     def test_series_resonant(self):
         """Resonant series circuit."""
-        filepath = EXAMPLES_DIR / "resonant-series.asc"
+        filepath = EXAMPLES_DIR / "resonant_series.asc"
         if not filepath.exists():
-            pytest.skip("resonant-series.asc not found")
+            pytest.skip("resonant_series.asc not found")
 
         lt = LTspice()
         lt.read(str(filepath))
@@ -282,9 +282,9 @@ class TestSpecificCircuits:
 
     def test_circuit_with_parameters(self):
         """Circuit with parameterized values."""
-        filepath = EXAMPLES_DIR / "passive-filter-low-pass-omega.asc"
+        filepath = EXAMPLES_DIR / "passive_filter_low_pass_omega.asc"
         if not filepath.exists():
-            pytest.skip("passive-filter-low-pass-omega.asc not found")
+            pytest.skip("passive_filter_low_pass_omega.asc not found")
 
         lt = LTspice()
         lt.read(str(filepath))

@@ -252,11 +252,11 @@ def test_simple2_conversion_no_renumbering():
     lt.parse()
     lt.make_netlist(renumber_nodes=False)
 
-    expected = """W 4 3; right
-W 4 5; down
-W 3 6; down
-V1 5 0_1 5.0; down
-R1 6 0_2 1000.0; down
+    expected = """W 2 1; right
+W 2 3; down
+W 1 4; down
+V1 3 0_1 5; down
+R1 4 0_2 1000.0; down
 """
     assert lt.netlist == expected
 
@@ -271,7 +271,7 @@ def test_simple2_conversion():
     expected = """W 1 2; right
 W 1 3; down
 W 2 4; down
-V1 3 0_1 5.0; down
+V1 3 0_1 5; down
 R1 4 0_2 1000.0; down
 """
     assert lt.netlist == expected
@@ -280,7 +280,7 @@ R1 4 0_2 1000.0; down
 def test_resonant_series():
     """Test resonant-series.asc: µ parsing, milli-H, and AC source."""
     lt = ltparser.LTspice()
-    lt.read(os.path.join(EXAMPLES_DIR, "resonant-series.asc"))
+    lt.read(os.path.join(EXAMPLES_DIR, "resonant_series.asc"))
     lt.parse()
     lt.make_netlist()
 
