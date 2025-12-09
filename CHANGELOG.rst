@@ -2,7 +2,7 @@ Changelog
 =========
 
 0.3.0 (in progress)
------
+--------------------
 * major refactoring of code
 * seems to be at least as good a before refactoring
 * support for voltmeter and ammeters

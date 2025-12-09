@@ -11,8 +11,13 @@ from .netlist import NetlistGenerator
 from .components import ComponentMatcher
 from .transformations import NetlistTransformer
 
-__version__ = "0.2.0"
-__author__ = "Scott"
+__version__ = "0.3.0"
+__author__ = "Scott Prahl"
+__email__ = "scott.prahl@oit.edu"
+__copyright__ = "2024-25 Scott Prahl"
+__license__ = "MIT"
+__url__ = "https://github.com/scottprahl/ltparser.git"
+
 
 __all__ = [
     "LTspice",

@@ -7,8 +7,11 @@
    :caption: Example Usage
    :hidden:
 
-   01-basics.ipynb
- 
+   01_basics.ipynb
+   passive_filters.ipynb
+   voltage_dividers.ipynb
+   voltmeter_ammeters.ipynb
+
 .. toctree::
    :caption: API
    :hidden:
