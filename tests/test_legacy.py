@@ -5,11 +5,7 @@ These tests verify value parsing and bulk file processing across many example ci
 """
 
 from pathlib import Path
-
-try:
-    import pytest
-except ImportError:
-    pytest = None
+import pytest
 
 from ltparser import LTspice
 from ltparser.netlist import _parse_prefixed_value

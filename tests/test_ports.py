@@ -4,8 +4,9 @@ Test IOPIN/port generation functionality.
 Tests that ltparser correctly generates port definitions from IOPIN/FLAG pairs.
 """
 
-from pathlib import Path
 import pytest
+from pathlib import Path
+
 import ltparser
 
 EXAMPLES_DIR = Path(__file__).parent / "examples"
@@ -63,7 +64,6 @@ P2 3 0; down, v=B
 
 def test_voltage_divider_port_count():
     """Test that voltage_divider_1.asc generates exactly 2 ports."""
-
     asc_path = EXAMPLES_DIR / "voltage_divider_1.asc"
     lt = ltparser.LTspice()
     lt.read(str(asc_path))
@@ -80,7 +80,6 @@ def test_voltage_divider_port_count():
 
 def test_voltage_divider_port_labels():
     """Test that voltage_divider_1.asc ports have correct labels from FLAGs."""
-
     asc_path = EXAMPLES_DIR / "voltage_divider_1.asc"
     lt = ltparser.LTspice()
     lt.read(str(asc_path))
@@ -106,8 +105,7 @@ def test_voltage_divider_port_labels():
 
 
 def test_voltage_divider_port_format():
-    """Test that ports follow the lcapy format: P{n} {node} 0; down, v={label}"""
-
+    """Test that ports follow the lcapy format: P{n} {node} 0; down, v={label}."""
     asc_path = EXAMPLES_DIR / "voltage_divider_1.asc"
     lt = ltparser.LTspice()
     lt.read(str(asc_path))
@@ -132,7 +130,6 @@ def test_voltage_divider_port_format():
 
 def test_passive_filter_with_port():
     """Test that passive_filter_band_pass.asc generates correct port."""
-
     asc_path = EXAMPLES_DIR / "passive_filter_low_pass.asc"
     lt = ltparser.LTspice()
     lt.read(str(asc_path))
@@ -153,7 +150,6 @@ def test_passive_filter_with_port():
 
 def test_no_iopins_no_ports():
     """Test that files without IOPINs don't generate port lines."""
-
     asc_path = EXAMPLES_DIR / "simple3.asc"
 
     lt = ltparser.LTspice()
@@ -167,27 +163,6 @@ def test_no_iopins_no_ports():
     assert len(port_lines) == 0, f"Expected no ports, found {len(port_lines)}: {port_lines}"
 
 
+# For backwards compatibility with unittest
 if __name__ == "__main__":
-    # Allow running directly for quick testing
-    print("Running IOPIN/port tests...\n")
-
-    try:
-        test_voltage_divider_with_ports()
-        print()
-        test_voltage_divider_port_count()
-        print()
-        test_voltage_divider_port_labels()
-        print()
-        test_voltage_divider_port_format()
-        print()
-        test_passive_filter_with_port()
-        print()
-        print("=" * 70)
-        print("All tests passed!")
-        print("=" * 70)
-    except AssertionError as e:
-        print(f"\n✗ Test failed: {e}")
-        exit(1)
-    except Exception as e:
-        print(f"\n✗ Error: {e}")
-        exit(1)
+    pytest.main([__file__, "-v"])

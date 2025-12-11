@@ -1,9 +1,12 @@
 """Tests for op-amp functionality in ltparser."""
 
+import pytest
 from pathlib import Path
 
 from ltparser import LTspice
 from ltparser.components import ComponentMatcher, node_key
+
+EXAMPLES_DIR = Path(__file__).parent / "examples"
 
 
 def test_match_5pin_opamp_down():
@@ -130,8 +133,7 @@ def test_opamp_missing_nodes():
 
 def test_inverting_opamp_simple_netlist():
     """Ensure inverting-opamp-simple.asc produces the expected netlist."""
-    examples_dir = Path(__file__).parent / "examples"
-    asc_path = examples_dir / "inverting_opamp_simple.asc"
+    asc_path = EXAMPLES_DIR / "inverting_opamp_simple.asc"
 
     lt = LTspice()
     lt.read(str(asc_path))
@@ -156,7 +158,30 @@ R1 6 8 1000.0; right
 R2 2 3 5000.0; right
 R3 16 18 833.0; down
 Vin 15 17 {Vin}; down
-E1 11 0 opamp 9 14
+E1 11 0_1 opamp 9 14
+P1 12 0; down, v=Vout
 """
 
     assert lt.netlist == expected
+
+
+def test_inverting_opamp_simple_minimal_netlist():
+    """Ensure inverting-opamp-simple.asc produces the expected netlist."""
+    asc_path = EXAMPLES_DIR / "inverting_opamp_simple.asc"
+    expected = """R1 1 2 1000.0
+R2 2 3 5000.0
+R3 4 0_1 833.0
+Vin 1 0_2 {Vin}
+E1 3 0_1 opamp 2 4
+P1 3 0; v=Vout
+"""
+    lt = LTspice()
+    lt.read(str(asc_path))
+    lt.parse()
+    lt.make_netlist(minimal=True)
+    assert lt.netlist == expected
+
+
+# For backwards compatibility with unittest
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

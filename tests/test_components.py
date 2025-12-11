@@ -1,5 +1,6 @@
 """Tests for ltparser.components module."""
 
+import pytest
 from ltparser.components import node_key, rotate_point, ComponentMatcher
 
 
@@ -78,3 +79,8 @@ def test_match_simple_opamp_nodes():
     assert "in_plus" in matched
     assert "in_minus" in matched
     assert "out" in matched
+
+
+# For backwards compatibility with unittest
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

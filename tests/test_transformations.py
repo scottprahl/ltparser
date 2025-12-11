@@ -1,5 +1,6 @@
 """Tests for ltparser.transformations module."""
 
+import pytest
 from ltparser.transformations import NetlistTransformer
 
 
@@ -149,3 +150,8 @@ R1 1 2 1000.0; right
 
     # Should have numeric replacements
     assert all(isinstance(v, int) or v == "0" for v in result_nodes.values())
+
+
+# For backwards compatibility with unittest
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

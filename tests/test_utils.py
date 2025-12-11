@@ -1,5 +1,6 @@
 """Tests for ltparser.utils module."""
 
+import pytest
 from ltparser.utils import clean_node_name, parse_direction, format_value, is_ground_node
 
 
@@ -54,3 +55,8 @@ def test_is_ground_node_string():
     assert is_ground_node("0_2")
     assert not is_ground_node("1")
     assert not is_ground_node("5")
+
+
+# For backwards compatibility with unittest
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

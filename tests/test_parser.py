@@ -4,11 +4,7 @@ Unit tests for low-level parser helpers.
 These tests focus on value parsing (SI prefixes, units, etc.).
 """
 
-try:
-    import pytest
-except ImportError:
-    pytest = None
-
+import pytest
 from ltparser.netlist import _parse_prefixed_value
 
 
@@ -61,3 +57,8 @@ def test_parse_prefixed_value_valid(raw, expected):
 )
 def test_parse_prefixed_value_invalid(raw):
     assert _parse_prefixed_value(raw) is None
+
+
+# For backwards compatibility with unittest
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

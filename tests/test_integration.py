@@ -5,6 +5,8 @@ These tests use actual .asc files to verify end-to-end functionality.
 """
 
 import os
+import pytest
+
 import ltparser
 
 
@@ -299,3 +301,8 @@ V 6 9 ac 20.000000; down
 """
 
     assert lt.netlist == expected
+
+
+# For backwards compatibility with unittest
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

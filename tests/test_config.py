@@ -1,5 +1,6 @@
 """Tests for ltparser.config module."""
 
+import pytest
 from ltparser.config import load_components_config, COMPONENTS_CONFIG
 
 
@@ -27,3 +28,8 @@ def test_components_config_structure():
         assert (
             "two_terminal" in components or "multi_terminal" in components
         ), "Components should have 'two_terminal' or 'multi_terminal'"
+
+
+# For backwards compatibility with unittest
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
