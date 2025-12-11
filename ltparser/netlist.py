@@ -5,6 +5,7 @@ Handles conversion of parsed LTspice data to circuit netlists.
 """
 
 import re
+import warnings
 import pyparsing as pp
 import networkx as nx
 from .components import ComponentMatcher, node_key
@@ -55,6 +56,168 @@ def apply_netlist_prefix(inst_name, kind):
 
     # No prefix substitution needed, return original name
     return inst_name
+
+
+def extract_iopins_and_flags(parsed_data):
+    """
+    Extract IOPIN and FLAG definitions from parsed LTspice data.
+
+    IOPINs are stored as: ['IOPIN', 'IOPIN', x, y, direction]
+    FLAGs can be standalone: [['FLAG', x, y, label]]
+    or part of symbol group: [[...], ['FLAG', x, y, label], ...]
+
+    Args:
+        parsed_data: List of parsed LTspice elements
+
+    Returns:
+        tuple: (iopins_list, flags_dict)
+            - iopins_list: List of dicts {'x': int, 'y': int, 'direction': str}
+            - flags_dict: Dict mapping (x, y) tuples to label strings
+    """
+    iopins = []
+    flags = {}
+
+    for line in parsed_data:
+        # Check for IOPIN lines
+        if isinstance(line, list) and len(line) >= 4 and line[0] == "IOPIN":
+            # Format: ['IOPIN', 'IOPIN', x, y, direction]
+            if len(line) >= 5:
+                iopins.append({"x": line[2], "y": line[3], "direction": line[4]})
+
+        # Check for standalone FLAG lines
+        elif isinstance(line, list) and len(line) == 1:
+            if isinstance(line[0], list) and len(line[0]) >= 4 and line[0][0] == "FLAG":
+                # Format: [['FLAG', x, y, label]]
+                flag_data = line[0]
+                coord = (flag_data[1], flag_data[2])
+                flags[coord] = flag_data[3]
+
+        # Check for FLAGs within symbol groups
+        elif isinstance(line, list):
+            for item in line:
+                if isinstance(item, list) and len(item) >= 4 and item[0] == "FLAG":
+                    # Format: ['FLAG', x, y, label]
+                    coord = (item[1], item[2])
+                    flags[coord] = item[3]
+
+    return iopins, flags
+
+
+def generate_port_definitions(iopins, flags, nodes_dict, minimal=False):
+    """
+    Generate lcapy port definitions for IOPINs.
+
+    Format:
+        Normal mode: P{n} {node} 0; down, v={label}
+        Minimal mode: P{n} {node} 0; v={label}
+
+    Args:
+        iopins: List of IOPIN dicts with 'x', 'y', 'direction' keys
+        flags: Dict mapping (x, y) tuples to FLAG labels
+        nodes_dict: Dict mapping node keys to node numbers
+        minimal: If True, omit direction hint (no drawing info in minimal mode)
+
+    Returns:
+        list: List of port definition strings
+    """
+    port_definitions = []
+
+    for idx, iopin in enumerate(iopins, start=1):
+        # Find matching FLAG label
+        coord = (iopin["x"], iopin["y"])
+
+        if coord in flags:
+            label = flags[coord]
+        else:
+            # No matching FLAG - use default label and warn
+            label = f"PORT_{iopin['x']}_{iopin['y']}"
+            warnings.warn(
+                f"IOPIN at ({iopin['x']}, {iopin['y']}) has no matching FLAG. "
+                f"Using default label '{label}'",
+                UserWarning,
+            )
+
+        # Find the node for this coordinate
+        # Try exact coordinate first
+        node_key_str = node_key(iopin["x"], iopin["y"])
+        node = nodes_dict.get(node_key_str)
+
+        # If not found, this coordinate might have been consolidated with another node
+        # during net extraction. Search for any node key that contains these coordinates.
+        if node is None:
+            # Look through all node keys to find one that represents the same electrical point
+            for nk, nv in nodes_dict.items():
+                # Node keys are in format "x_y"
+                parts = nk.split("_")
+                if len(parts) == 2:
+                    try:
+                        nx, ny = int(parts[0]), int(parts[1])
+                        if nx == iopin["x"] and ny == iopin["y"]:
+                            node = nv
+                            break
+                    except ValueError:
+                        continue
+
+        if node is None:
+            warnings.warn(
+                f"Could not find node for IOPIN at ({iopin['x']}, {iopin['y']}). "
+                f"Skipping port P{idx}. The IOPIN coordinate may need to be added "
+                f"to the circuit as a node.",
+                UserWarning,
+            )
+            continue
+
+        # Generate lcapy port definition
+        # In minimal mode, omit direction (no drawing hints)
+        if minimal:
+            port_def = f"P{idx} {node} 0; v={label}"
+        else:
+            port_def = f"P{idx} {node} 0; down, v={label}"
+        port_definitions.append(port_def)
+
+    return port_definitions
+
+
+def ensure_iopin_nodes(parsed_data, nodes_dict):
+    """
+    Ensure that IOPIN coordinates exist as nodes in the nodes dictionary.
+
+    This function should be called after initial node extraction but before
+    netlist generation to ensure IOPINs can be properly referenced.
+
+    Args:
+        parsed_data: List of parsed LTspice elements
+        nodes_dict: Dictionary mapping node keys to node numbers (modified in-place)
+
+    Returns:
+        int: Number of IOPIN nodes added
+    """
+    # Extract just the IOPINs
+    iopins, _ = extract_iopins_and_flags(parsed_data)
+
+    added_count = 0
+    for iopin in iopins:
+        nk = node_key(iopin["x"], iopin["y"])
+
+        # If this coordinate doesn't have a node, we need to add one
+        if nk not in nodes_dict:
+            # Find the highest existing node number
+            if nodes_dict:
+                max_node = max(v for v in nodes_dict.values() if isinstance(v, int) and v > 0)
+                new_node_num = max_node + 1
+            else:
+                new_node_num = 1
+
+            nodes_dict[nk] = new_node_num
+            added_count += 1
+
+            warnings.warn(
+                f"Added node {new_node_num} at IOPIN coordinate ({iopin['x']}, {iopin['y']}). "
+                f"This coordinate was not part of the initial wire network.",
+                UserWarning,
+            )
+
+    return added_count
 
 
 def ltspice_sine_parser(s):
@@ -199,7 +362,6 @@ class NetlistGenerator:
         self._include_wire_directions = True
         self._minimal = False
         self._do_reorient_rlc = False
-        self._use_net_extraction = False
 
         # Component counters for independent numbering
         self.component_counters = {
@@ -372,7 +534,7 @@ class NetlistGenerator:
 
         elif kind.lower().startswith("cap") or kind.lower().startswith("ind"):
             # Capacitor or Inductor
-#            prefix = "C" if kind.lower().startswith("cap") else "L"
+            #            prefix = "C" if kind.lower().startswith("cap") else "L"
             n1 = matched.get("pin0", matched.get("n1", "?"))
             n2 = matched.get("pin1", matched.get("n2", "?"))
 
@@ -529,7 +691,6 @@ class NetlistGenerator:
         use_named_nodes=True,
         include_wire_directions=True,
         minimal=False,
-        use_net_extraction=False,
         reorient_rlc=True,
         renumber_nodes=True,
     ):
@@ -539,8 +700,7 @@ class NetlistGenerator:
         Args:
             use_named_nodes: Keep named nodes (True) or convert to numbers (False)
             include_wire_directions: Include direction hints for wires
-            minimal: Only include components, no wires
-            use_net_extraction: Use NetworkX for net extraction (handled externally)
+            minimal: Only include components, no wires (net extraction handled externally)
             reorient_rlc: Reorient R/L/C to go right or down only
             renumber_nodes: Renumber nodes sequentially
 
@@ -551,7 +711,6 @@ class NetlistGenerator:
         self._include_wire_directions = include_wire_directions
         self._minimal = minimal
         self._do_reorient_rlc = reorient_rlc
-        self._use_net_extraction = use_net_extraction
 
         # Process parsed data
         for line in self.parsed:
@@ -575,5 +734,15 @@ class NetlistGenerator:
             self.netlist, self.nodes = NetlistTransformer.renumber_nodes_for_drawing(
                 self.netlist, nodes_dict=self.nodes, parsed_data=self.parsed
             )
+
+        # Ensure IOPIN coordinates have nodes before generating port definitions
+        ensure_iopin_nodes(self.parsed, self.nodes)
+
+        # Generate port definitions for IOPINs
+        iopins, flags = extract_iopins_and_flags(self.parsed)
+        if iopins:
+            port_defs = generate_port_definitions(iopins, flags, self.nodes, minimal=minimal)
+            for port_def in port_defs:
+                self.netlist += f"{port_def}\n"
 
         return self.netlist

@@ -1101,6 +1101,5 @@ class LTspice:
         for line in self.netlist.splitlines():
             cct.add(line)
 
-        if not self.single_ground:
-            cct.add(";autoground=True")
+        cct.add(";autoground=True")
         return cct

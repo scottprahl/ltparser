@@ -134,8 +134,8 @@ class ComponentMatcher:
         # Check two_terminal components
         components_config = COMPONENTS_CONFIG.get("components", {})
         two_term = components_config.get("two_terminal", {})
-#        multi_term = components_config.get("multi_terminal", {})
-#        three_term = components_config.get("three_terminal", {})
+        #        multi_term = components_config.get("multi_terminal", {})
+        #        three_term = components_config.get("three_terminal", {})
 
         config = None
         if kind in two_term:

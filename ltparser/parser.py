@@ -36,6 +36,8 @@ symbol = (
 
 flag = pp.Literal("FLAG") + signed_integer + signed_integer + pp.Word(pp.alphanums + "+-_")
 
+iopin = pp.Literal("IOPIN") + signed_integer + signed_integer + pp.Word(pp.alphas)
+
 symattr = pp.Literal("SYMATTR") + pp.Word(pp.alphanums) + pp.restOfLine
 
 window = pp.Literal("WINDOW") + integer + integer + integer + pp.restOfLine
@@ -114,7 +116,7 @@ class LTspice:
         """
         Parse the LTspice file contents.
 
-        Uses pyparsing to extract circuit elements (wires, symbols, flags, etc.)
+        Uses pyparsing to extract circuit elements (wires, symbols, flags, iopins, etc.)
         """
         if self.contents is None:
             print("No file loaded. Use read() first.")
@@ -139,12 +141,24 @@ class LTspice:
                 elif line.startswith("FLAG"):
                     # Flags can be standalone or part of symbol
                     flag_data = list(flag.parseString(line))
-                    if parsed_lines and isinstance(parsed_lines[-1], list):
+                    # Only attach to previous entry if it's a SYMBOL group
+                    # (starts with ['SYMBOL', ...])
+                    if (
+                        parsed_lines
+                        and isinstance(parsed_lines[-1], list)
+                        and len(parsed_lines[-1]) > 0
+                        and isinstance(parsed_lines[-1][0], list)
+                        and len(parsed_lines[-1][0]) > 0
+                        and parsed_lines[-1][0][0] == "SYMBOL"
+                    ):
                         # Part of previous symbol
                         parsed_lines[-1].append(flag_data)
                     else:
                         # Standalone flag
                         parsed_lines.append([flag_data])
+                elif line.startswith("IOPIN"):
+                    # Parse IOPIN line
+                    parsed_lines.append(["IOPIN"] + list(iopin.parseString(line)))
                 elif line.startswith("WINDOW"):
                     # Add to current symbol group
                     if parsed_lines and isinstance(parsed_lines[-1], list):
@@ -249,7 +263,6 @@ class LTspice:
         use_named_nodes=True,
         include_wire_directions=True,
         minimal=False,
-        use_net_extraction=False,
         reorient_rlc=True,
         renumber_nodes=True,
     ):
@@ -259,8 +272,7 @@ class LTspice:
         Args:
             use_named_nodes: Keep named nodes (True) or convert to numbers (False)
             include_wire_directions: Include direction hints for wires
-            minimal: Only include components, no wires
-            use_net_extraction: Use NetworkX for net extraction
+            minimal: Only include components, no wires (automatically enables net extraction)
             reorient_rlc: Reorient R/L/C/W to go right or down only
             renumber_nodes: Renumber nodes sequentially with unique grounds
 
@@ -271,6 +283,10 @@ class LTspice:
             self.parse()
             if self.parsed is None:
                 return ""
+
+        # Minimal mode requires net extraction to consolidate electrically connected nodes
+        # Net extraction is only meaningful with minimal mode
+        use_net_extraction = minimal
 
         # Always rebuild nodes from parsed data to ensure fresh coordinate-based keys
         # This is important when make_netlist is called multiple times with different options
@@ -288,7 +304,6 @@ class LTspice:
             use_named_nodes=use_named_nodes,
             include_wire_directions=include_wire_directions,
             minimal=minimal,
-            use_net_extraction=use_net_extraction,
             reorient_rlc=reorient_rlc,
             renumber_nodes=renumber_nodes,
         )
@@ -316,6 +331,6 @@ class LTspice:
             cct.add(line)
 
         cct.add(";autoground=true")
-        cct.add(";draw_nodes=connections")
-        cct.add(";label_nodes=none")
+        #        cct.add(";draw_nodes=connections")
+        #        cct.add(";label_nodes=none")
         return cct
