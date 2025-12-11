@@ -261,7 +261,7 @@ class LTspice:
     def make_netlist(
         self,
         use_named_nodes=True,
-        include_wire_directions=True,
+        include_directions=True,
         minimal=False,
         reorient_rlc=True,
         renumber_nodes=True,
@@ -271,11 +271,10 @@ class LTspice:
 
         Args:
             use_named_nodes: Keep named nodes (True) or convert to numbers (False)
-            include_wire_directions: Include direction hints for wires
+            include_directions: Include direction hints for wires
             minimal: Only include components, no wires (automatically enables net extraction)
             reorient_rlc: Reorient R/L/C/W to go right or down only
             renumber_nodes: Renumber nodes sequentially with unique grounds
-
         Returns:
             str: Generated netlist
         """
@@ -284,25 +283,20 @@ class LTspice:
             if self.parsed is None:
                 return ""
 
-        # Minimal mode requires net extraction to consolidate electrically connected nodes
-        # Net extraction is only meaningful with minimal mode
-        use_net_extraction = minimal
-
         # Always rebuild nodes from parsed data to ensure fresh coordinate-based keys
         # This is important when make_netlist is called multiple times with different options
-        if use_net_extraction:
+        if minimal:
+            # Minimal mode requires net extraction to consolidate electrically connected nodes
             self.make_nodes_with_net_extraction()
         else:
             self.make_nodes_from_wires()
             self.sort_nodes()
 
-        # Create netlist generator
         generator = NetlistGenerator(self.nodes, self.parsed)
 
-        # Generate netlist
         self.netlist = generator.generate(
             use_named_nodes=use_named_nodes,
-            include_wire_directions=include_wire_directions,
+            include_directions=include_directions,
             minimal=minimal,
             reorient_rlc=reorient_rlc,
             renumber_nodes=renumber_nodes,
@@ -313,6 +307,44 @@ class LTspice:
         # renumbering logic. Keep them in sync explicitly:
         self.node_manager.nodes = generator.nodes
         self.nodes = self.node_manager.nodes
+
+        # In minimal mode, filter nodes to only those actually used in the netlist
+        if minimal:
+            # Extract all node references from the netlist
+            used_node_values = set()
+            for line in self.netlist.split("\n"):
+                if not line.strip():
+                    continue
+                parts = line.split()
+                if len(parts) < 3:
+                    continue
+
+                # Extract nodes based on component type
+                comp = parts[0]
+                if comp.startswith("E"):  # Op-amp
+                    # Nodes are in positions 1, 2, 4, 5 (skipping 'opamp' at position 3)
+                    if len(parts) >= 6:
+                        used_node_values.add(parts[1].rstrip(";"))
+                        used_node_values.add(parts[2].rstrip(";"))
+                        used_node_values.add(parts[4].rstrip(";"))
+                        used_node_values.add(parts[5].rstrip(";"))
+                elif comp.startswith("P"):  # Port/IOPIN
+                    used_node_values.add(parts[1].rstrip(";"))
+                    used_node_values.add(parts[2].rstrip(";"))
+                else:  # Two-terminal components (R, C, L, V, I, etc.)
+                    if len(parts) >= 3:
+                        used_node_values.add(parts[1].rstrip(";"))
+                        used_node_values.add(parts[2].rstrip(";"))
+
+            # Filter nodes dictionary to only include coordinate keys whose values appear in netlist
+            # Need to compare as strings since node values might be int or str
+            filtered_nodes = {}
+            for coord_key, node_value in self.nodes.items():
+                if str(node_value) in used_node_values:
+                    filtered_nodes[coord_key] = node_value
+
+            self.nodes = filtered_nodes
+            self.node_manager.nodes = filtered_nodes
 
         return self.netlist
 

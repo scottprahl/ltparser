@@ -359,7 +359,7 @@ class NetlistGenerator:
         self.component_matcher = ComponentMatcher(nodes_dict)
 
         # Configuration flags
-        self._include_wire_directions = True
+        self._include_directions = True
         self._minimal = False
         self._do_reorient_rlc = False
 
@@ -419,7 +419,7 @@ class NetlistGenerator:
 
         # Include direction hints based on mode
         in_minimal_mode = getattr(self, "_minimal", False)
-        include_directions = getattr(self, "_include_wire_directions", False)
+        include_directions = getattr(self, "_include_directions", False)
 
         if not in_minimal_mode and not include_directions:
             # Default: include directions in non-minimal mode
@@ -689,7 +689,7 @@ class NetlistGenerator:
     def generate(
         self,
         use_named_nodes=True,
-        include_wire_directions=True,
+        include_directions=True,
         minimal=False,
         reorient_rlc=True,
         renumber_nodes=True,
@@ -699,7 +699,7 @@ class NetlistGenerator:
 
         Args:
             use_named_nodes: Keep named nodes (True) or convert to numbers (False)
-            include_wire_directions: Include direction hints for wires
+            include_directions: Include direction hints for wires
             minimal: Only include components, no wires (net extraction handled externally)
             reorient_rlc: Reorient R/L/C to go right or down only
             renumber_nodes: Renumber nodes sequentially
@@ -708,7 +708,7 @@ class NetlistGenerator:
             str: Generated netlist
         """
         self.netlist = ""
-        self._include_wire_directions = include_wire_directions
+        self._include_directions = include_directions
         self._minimal = minimal
         self._do_reorient_rlc = reorient_rlc
 

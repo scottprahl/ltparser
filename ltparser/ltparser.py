@@ -542,7 +542,7 @@ class LTspice:
         # In non-minimal mode, always include directions (helpful for debugging)
         # In minimal mode, never include directions (let lcapy auto-layout)
         in_minimal_mode = getattr(self, "_minimal", False)
-        include_directions = getattr(self, "_include_wire_directions", False)
+        include_directions = getattr(self, "_include_directions", False)
 
         if not in_minimal_mode and not include_directions:
             # Default: include directions in non-minimal mode
@@ -897,7 +897,7 @@ class LTspice:
     def make_netlist(
         self,
         use_named_nodes=True,
-        include_wire_directions=True,
+        include_directions=True,
         minimal=False,
         use_net_extraction=False,
         reorient_rlc=True,
@@ -909,7 +909,7 @@ class LTspice:
             use_named_nodes: If True, keep named nodes like '+Vs' and '-Vs'.
                            If False (default), convert to numbers for better
                            drawing compatibility with lcapy.
-            include_wire_directions: If True, include direction hints (right, down).
+            include_directions: If True, include direction hints (right, down).
                                    If False (default), omit directions to let lcapy
                                    auto-layout, which may work better for complex circuits.
             minimal: If True, only include components (no wires or directions).
@@ -927,7 +927,7 @@ class LTspice:
         """
         self.netlist = ""
         self.graph = nx.Graph()
-        self._include_wire_directions = include_wire_directions  # Store for wire_to_netlist
+        self._include_directions = include_directions  # Store for wire_to_netlist
         self._minimal = minimal  # Store for later use
         self._do_reorient_rlc = reorient_rlc  # Store for symbol_to_netlist (flag)
 
