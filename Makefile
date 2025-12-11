@@ -110,6 +110,7 @@ test: $(VENV)/.ready
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_legacy.py
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_opamp.py
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_parser.py
+	-$(PYTEST) $(PYTEST_OPTS) tests/test_ports.py
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_transformations.py
 	-$(PYTEST) $(PYTEST_OPTS) tests/test_utils.py
 
@@ -154,6 +155,7 @@ pylint-check:
 	-@$(PYLINT) tests/test_legacy.py
 	-@$(PYLINT) tests/test_opamp.py
 	-@$(PYLINT) tests/test_parser.py
+	-@$(PYLINT) tests/test_ports.py
 	-@$(PYLINT) tests/test_transformations.py
 	-@$(PYLINT) tests/test_utils.py
 
